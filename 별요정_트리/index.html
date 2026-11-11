@@ -24,6 +24,27 @@
 @keyframes fairy-flutter-left{from{transform:scaleX(.8) rotate(-2deg)}to{transform:scaleX(1) rotate(2deg)}}
 @keyframes fairy-flutter-right{from{transform:scaleX(.8) rotate(2deg)}to{transform:scaleX(1) rotate(-2deg)}}
 @media(prefers-reduced-motion:reduce){.fairy-rig g{animation:none!important}}
+
+.forest-wind{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity 1.8s ease}
+.complete .forest-wind{opacity:1;visibility:visible;filter:brightness(1.12) saturate(1.08)}
+.forest-wind image{transform-box:view-box}.complete .forest-left{transform-origin:10% 100%;animation:forest-sway-left 8s ease-in-out infinite}.complete .forest-right{transform-origin:90% 100%;animation:forest-sway-right 9.5s ease-in-out infinite}
+.star-shimmer{opacity:0;pointer-events:none;transition:opacity 1.8s ease}.complete .star-shimmer{opacity:1}
+.star-core{transform-box:view-box;transform-origin:600px 130px;filter:drop-shadow(0 0 12px #ffd45f)}
+.complete .star-core{animation:star-breathe 3.6s ease-in-out infinite}.complete #topperGlow{animation:star-warmth 3.6s ease-in-out infinite}
+.star-sparkle{opacity:0;transform-box:view-box;transform-origin:var(--spark-x) var(--spark-y)}
+.complete .star-sparkle{animation:star-sparkle 3.8s ease-in-out var(--spark-delay,0s) infinite}
+.finale-snow{position:fixed;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;opacity:0;transition:opacity 1.8s ease}
+.winter-finale .finale-snow{opacity:1}
+body::before{content:"";position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 40% 25%,#ffcf681a,transparent 65%);transition:opacity 2s ease}
+body.winter-finale::before{opacity:1}
+.complete .celebration{animation:celebrate-in 1.5s ease both,celebrate-away 1s ease 6s forwards}
+@keyframes forest-sway-left{0%,100%{transform:rotate(0deg)}30%{transform:rotate(.4deg)}72%{transform:rotate(-.3deg)}}
+@keyframes forest-sway-right{0%,100%{transform:rotate(0deg)}35%{transform:rotate(-.35deg)}75%{transform:rotate(.28deg)}}
+@keyframes star-breathe{0%,100%{opacity:.6;transform:scale(.99)}50%{opacity:1;transform:scale(1.035)}}
+@keyframes star-warmth{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes star-sparkle{0%,20%,85%,100%{opacity:0;transform:scale(.65)}45%,60%{opacity:.95;transform:scale(1.15)}}
+@keyframes celebrate-away{to{opacity:0;transform:translateY(12px);visibility:hidden}}
+@media(prefers-reduced-motion:reduce){.complete .forest-left,.complete .forest-right,.complete .star-core,.complete #topperGlow,.complete .star-sparkle,.complete .celebration{animation:none!important}.complete .star-sparkle{opacity:.6}.finale-snow{display:none}}
 </style>
 </head>
 <body>
@@ -127,6 +148,23 @@
 <g id="glow-39" class="lamp-glow" style="opacity:1"><circle cx="650" cy="1119" r="29" fill="url(#lampWarm)"/><circle cx="650" cy="1119" r="3.3" fill="#fff5cc"/></g>
 </g>
 <circle id="topperGlow" cx="600" cy="130" r="135" fill="url(#starWarm)" style="opacity:0"/>
+<g class="star-shimmer" aria-hidden="true">
+<polygon class="star-core" points="600.0,68.0 615.9,108.2 659.0,110.8 625.7,138.3 636.4,180.2 600.0,157.0 563.6,180.2 574.3,138.3 541.0,110.8 584.1,108.2" fill="#ffd651" fill-opacity=".48" stroke="#fff1a3" stroke-width="2"/>
+<g class="star-sparkle" style="--spark-x:517px;--spark-y:103px;--spark-delay:0s"><path d="M517 90Q519 101 530 103Q519 105 517 116Q515 105 504 103Q515 101 517 90Z" fill="#fff6cc"/></g>
+<g class="star-sparkle" style="--spark-x:670px;--spark-y:72px;--spark-delay:0.9s"><path d="M670 59Q672 70 683 72Q672 74 670 85Q668 74 657 72Q668 70 670 59Z" fill="#fff6cc"/></g>
+<g class="star-sparkle" style="--spark-x:688px;--spark-y:180px;--spark-delay:1.8s"><path d="M688 167Q690 178 701 180Q690 182 688 193Q686 182 675 180Q686 178 688 167Z" fill="#fff6cc"/></g>
+<g class="star-sparkle" style="--spark-x:552px;--spark-y:201px;--spark-delay:2.7s"><path d="M552 188Q554 199 565 201Q554 203 552 214Q550 203 539 201Q550 199 552 188Z" fill="#fff6cc"/></g>
+</g>
+</svg>
+<svg class="forest-wind" viewBox="0 0 1199 1312" aria-hidden="true">
+<defs>
+<linearGradient id="forestLeftFade"><stop offset="0" stop-color="white"/><stop offset=".18" stop-color="white"/><stop offset=".31" stop-color="black"/></linearGradient>
+<linearGradient id="forestRightFade"><stop offset=".69" stop-color="black"/><stop offset=".82" stop-color="white"/><stop offset="1" stop-color="white"/></linearGradient>
+<mask id="forestLeftMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1199" height="1312" style="mask-type:luminance"><rect width="1199" height="1312" fill="url(#forestLeftFade)"/></mask>
+<mask id="forestRightMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1199" height="1312" style="mask-type:luminance"><rect width="1199" height="1312" fill="url(#forestRightFade)"/></mask>
+</defs>
+<g mask="url(#forestLeftMask)"><image class="forest-left" href="./눈 내리는 숲속의 빛나는 크리스마스트리 (1).png" width="1199" height="1312"/></g>
+<g mask="url(#forestRightMask)"><image class="forest-right" href="./눈 내리는 숲속의 빛나는 크리스마스트리 (1).png" width="1199" height="1312"/></g>
 </svg>
 <div class="background-error" id="backgroundError" hidden role="alert">트리나 요정을 불러오지 못했어요.<small>이 폴더의 실행.cmd로 다시 열어 주세요.</small></div>
 <canvas id="particles" class="particles" aria-hidden="true"></canvas>
@@ -190,6 +228,7 @@
 </div>
 <footer><span>별 요정이 가까이 가면 장식이 하나씩 켜져요.</span><span>작은 빛이 모여, 환한 크리스마스가 됩니다.</span></footer>
 </main>
+<canvas class="finale-snow" id="finaleSnow" aria-hidden="true"></canvas>
 <script>
 'use strict';
 const video=document.getElementById('camera'),start=document.getElementById('start'),stop=document.getElementById('stop'),status=document.getElementById('status'),placeholder=document.getElementById('placeholder'),badge=document.getElementById('badge');
@@ -330,6 +369,48 @@ soundPreview.addEventListener('click',async()=>{
  if(await unlockAudio())void playSparkle();
 });
 updateSoundState();
+
+const snowCanvas=document.getElementById('finaleSnow'),snowContext=snowCanvas.getContext('2d');
+let snowFrame=0,snowLastTime=null,snowWidth=0,snowHeight=0;
+const snowflakes=[];
+function resizeSnow(){
+ snowWidth=innerWidth;snowHeight=innerHeight;
+ const dpr=Math.min(devicePixelRatio||1,2);
+ snowCanvas.width=Math.round(snowWidth*dpr);snowCanvas.height=Math.round(snowHeight*dpr);snowContext.setTransform(dpr,0,0,dpr,0,0);
+ const count=Math.min(180,Math.max(60,Math.round(snowWidth*snowHeight/11000)));
+ snowflakes.length=0;
+ for(let i=0;i<count;i++)snowflakes.push({x:Math.random()*snowWidth,y:Math.random()*snowHeight,r:.8+Math.random()*2.2,speed:22+Math.random()*48,drift:4+Math.random()*12,phase:Math.random()*Math.PI*2,alpha:.25+Math.random()*.55});
+}
+function paintSnow(now){
+ if(!completed||document.hidden){snowFrame=0;snowLastTime=null;return;}
+ const elapsed=snowLastTime===null?0:Math.min((now-snowLastTime)/1000,.05);snowLastTime=now;
+ snowContext.clearRect(0,0,snowWidth,snowHeight);
+ for(const flake of snowflakes){
+  flake.y+=flake.speed*elapsed;flake.x+=flake.drift*elapsed;
+  if(flake.y>snowHeight+8){flake.y=-8;flake.x=Math.random()*snowWidth;}
+  if(flake.x>snowWidth+20)flake.x=-20;
+  snowContext.globalAlpha=flake.alpha;snowContext.fillStyle='#f4f8ff';snowContext.beginPath();
+  snowContext.arc(flake.x+Math.sin(now*.0005+flake.phase)*14,flake.y,flake.r,0,Math.PI*2);snowContext.fill();
+ }
+ snowContext.globalAlpha=1;snowFrame=requestAnimationFrame(paintSnow);
+}
+function startWinterFinale(){
+ document.body.classList.add('winter-finale');
+ if(reducedMotion)return;
+ resizeSnow();snowLastTime=null;if(!snowFrame)snowFrame=requestAnimationFrame(paintSnow);
+}
+function stopWinterFinale(){
+ document.body.classList.remove('winter-finale');cancelAnimationFrame(snowFrame);snowFrame=0;snowLastTime=null;snowflakes.length=0;
+ snowContext.clearRect(0,0,snowWidth,snowHeight);
+}
+window.addEventListener('resize',()=>{if(completed&&!reducedMotion)resizeSnow();});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){cancelAnimationFrame(snowFrame);snowFrame=0;snowLastTime=null;}
+ else if(completed&&!reducedMotion&&!snowFrame)snowFrame=requestAnimationFrame(paintSnow);
+});
+window.addEventListener('pagehide',stopWinterFinale);
+window.addEventListener('pageshow',()=>{if(completed)startWinterFinale();});
+
 const lightPercent=document.getElementById('lightPercent'),lightProgress=document.getElementById('lightProgress'),lightCount=document.getElementById('lightCount'),fullReveal=document.getElementById('fullReveal'),topperGlow=document.getElementById('topperGlow'),celebration=document.getElementById('celebration');
 const lampPositions=[[579, 266], [530, 286], [620, 290], [654, 375], [528, 393], [594, 408], [444, 453], [512, 460], [588, 447], [650, 444], [484, 418], [692, 515], [741, 520], [425, 545], [477, 561], [571, 582], [620, 570], [795, 578], [825, 603], [469, 613], [400, 696], [442, 678], [507, 659], [354, 712], [328, 740], [597, 747], [737, 730], [857, 754], [892, 751], [364, 815], [392, 826], [507, 824], [573, 888], [765, 889], [814, 903], [319, 880], [914, 908], [293, 1007], [478, 1074], [650, 1119]];
 const initiallyLit=new Set([0, 3, 5, 8, 11, 14, 16, 19, 22, 25, 27, 30, 33, 35, 37, 39]);
@@ -343,11 +424,11 @@ function updateLightCount(){
 function lightLamp(lamp){lamp.lit=true;lamp.reveal.style.opacity='1';lamp.glow.style.opacity='1';}
 function completeTree(){
  if(completed)return;
- completed=true;lamps.forEach(lightLamp);playJingleBells();fullReveal.style.opacity='1';topperGlow.style.opacity='1';scene.classList.add('complete');celebration.hidden=false;
- sceneNote.textContent='당신의 빛으로 트리가 완성됐어요.';status.textContent='축하해요! 꼭대기 큰 별과 모든 장식이 가장 밝게 켜졌어요.';updateLightCount();
+ completed=true;lamps.forEach(lightLamp);playJingleBells();fullReveal.style.opacity='1';topperGlow.style.opacity='1';scene.classList.add('complete');celebration.hidden=false;startWinterFinale();
+ sceneNote.textContent='당신의 빛으로 트리가 완성됐어요.';status.textContent='축하해요! 큰 별이 반짝이고 숲에 눈이 내려요. 징글벨과 함께 즐겨요.';updateLightCount();
 }
 function resetLights(){
- completed=false;pointerInside=false;lastTouchedLamp=null;nextLightTime=0;clearParticles();stopSounds();fullReveal.style.opacity='0';topperGlow.style.opacity='0';scene.classList.remove('complete');celebration.hidden=true;
+ stopWinterFinale();completed=false;pointerInside=false;lastTouchedLamp=null;nextLightTime=0;clearParticles();stopSounds();fullReveal.style.opacity='0';topperGlow.style.opacity='0';scene.classList.remove('complete');celebration.hidden=true;
  lamps.forEach((lamp,index)=>{lamp.lit=initiallyLit.has(index);lamp.reveal.style.opacity=lamp.lit?'1':'0';lamp.glow.style.opacity=lamp.lit?'1':'0';});
  sceneNote.textContent=stream?'요정을 잠든 장식 가까이 움직여 주세요.':'웹캠을 켜고, 잠든 장식에 빛을 선물해 주세요.';
  if(stream)status.textContent='다시 시작해요. 요정이 장식에 가까이 가면 불빛이 하나씩 켜져요.';
