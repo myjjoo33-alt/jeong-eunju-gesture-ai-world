@@ -1,0 +1,9 @@
+도구: 기본 제공 image_gen (추가 스킬 설치 없음)
+참조: 크리스마스 별빛 요정 캐릭터 시트.png
+결과: fairy-cursor.png (1254×1254, 투명 배경과 얼굴 구멍)
+웹캠 얼굴: 원본 영상 중앙을 잘라 투명 얼굴 자리 뒤에 실시간 표시. 업로드·녹화 없음.
+파티클: 주황색, 기본 초당 220개, 장식 점등 후 0.9초간 초당 440개. 중첩 시 배수가 더 커지지 않음.
+소리: Web Audio로 만든 점등 알림과 징글벨 종소리 연주. 외부 음원 파일을 다운로드하지 않음.
+정지: 웹캠 끄기·다시 시작 시 파티클과 예약된 소리를 정리. 소리 켜기/끄기 가능.
+최종 이미지 편집 프롬프트:
+Edit target: supplied Christmas fairy character sheet. Make ONE isolated full-body FRONT-FACING fairy sprite from the front-view character at the top right of this sheet, preserving her exact design, warm golden butterfly-like sparkling wings, red velvet Santa hat with white fur and holly, curly brown hair, elf ears, red velvet fur-trimmed cape, gold star brooch, cream embroidered skirt, little brown satchel and red boots. Premium cute 3D illustrated style identical to the reference. Gentle upright hovering pose, both arms slightly out, facing directly forward, symmetrical face position; no wand covering the face. Entire character fully visible with modest transparent padding. Single character only on a genuinely TRANSPARENT background, no forest, no panels, no text, no grid, no extra views, no detached particles. Important compositing requirement: make the central facial skin area an EMPTY TRANSPARENT OVAL OPENING so a real webcam face can be placed BEHIND the sprite. Preserve hair, hat and ears around that opening but remove all drawn face skin, eyes, nose, mouth and eyebrows within the opening. The opening should be roughly centered at 50% of canvas width and 34% of canvas height, about 27% of canvas width and 30% of canvas height. Aim for a 1024x1024 square canvas. Do not replace the opening with white, black or skin color: it must have actual alpha transparency. Keep wings and clothes opaque except their natural delicate translucent edges.

@@ -1,0 +1,100 @@
+[261110]
+이 폴더에서 웹 기반 인터랙티브 콘텐츠를 만들거야.
+크리스마스
+
+손짓으로 포털을 열고 다른 세계를 만나는 웹 콘텐츠를 만들고 싶어.
+나는 코딩초보인 미디어아트 기획자야. 너는 웹 콘텐츠 개발을 도와줘.
+
+https://github.com/multica-ai/andrej-karpathy-skills/tree/2c606141936f1eeef17fa3043a72095b4765b9c2/skills/karpathy-guidelines
+
+이 스킬을 적용해
+------
+내 목표는 웹캠 화면 위에서 
+
+어두운 화면에 커다란 트리가 있습니다. 내 얼굴이 들어간 작은 별 요정이 마우스를 따라 움직이며 트리 장식을 하나씩 밝혀요. 
+마지막에는 트리가 환하게 빛이나는  간단한 인터랙티브 콘텐츠를 만드는 거야.
+내 PC의 Chrome에서 직접 실행해 보고 싶어
+너는 웹 콘텐츠를 만드는 시니어 개발자야.
+
+나는 비개발자라 코드와 개발 용어에 익숙하지 않아. 쉬운 한국어로 설명하고, 한 번에 한 단계씩 함께 진행해줘.
+
+먼저 아래 링크의 카파시 지침 스킬만 이프로젝트에 설치하고 읽어줘.
+https://github.com/multica-ai/andrej-karpathy-skills/tree/2c606141936f1eeef17fa3043a72095b4765b9c2/skills/karpathy-guidelines
+
+그다음 내 목표와 설명 방식,  '현재 요청한 단계만 진행하고 결과를 확인한다'는 작업 규칙을 이 폴터의 AGENTS.md 파일로 만들어줘.
+추가 스킬은 필요할 때 추천해줘.
+
+첫 실습에 필요한 파일과 실행 환경도 확인해줘. 지금은 계획하고 준비까지만 하고, 화면 제작은 다음 요청에서 시작하자.
+(준비된 것과 내가 지금 할 일을 짧게 알려줘.)
+
+---------
+
+마우스에 첨부한 사진의 요정캐릭터시트를 적용하는데
+얼굴은 웹캠에 나온 실제 인물의 얼굴이 들어가게 만들어줘.
+마우스가 움직일때마다 요정이 따라서 움직이고, 주황색 파티클이 계속 많이 나오게 해줘. 마우스가 장식에 닿을때 불이 켜지면서 마우스에서 나오는 파티클의 양을 2배로 늘렸다가 다시 원래의 양으로 뿜어내게 해줘.
+마우스가 장식을 만나서 불이 켜질때마다 뾰로롱 소리가 나게해주고,
+마지막에 모든 장식의 불이 켜졌을때는 크리스마스 캐롤 징글벨이 나오게 해줘.
+-----------------------
+
+[261111]
+MediaPipe 손 입력과 전시 준비
+
+기술의 이름을 기억해 두는 것이 중요하다.
+
+손을 어떻게 인식하는가?
+Hand Landmarker
+MediaPipe Hand Landmarker 태스크를 사용하면 이미지에서 손의 랜드마크를 감지할 수 있습니다. 이 태스크를 사용하여 손의 주요 지점을 찾고 시각적 효과를 렌더링할 수 있습니다. 이 태스크는 머신 러닝(ML) 모델을 사용하여 정적 데이터 또는 연속 스트림 형태의 이미지 데이터를 처리하며, 감지된 여러 손의 이미지 좌표계에서의 손 랜드마크, 월드 좌표계에서의 손 랜드마크, 그리고 왼손 또는 오른손 여부를 출력합니다.
+https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker
+
+손, 몸 인식 영상
+
+
+손 랜드마크 감지 - MediaPipe를 활용한 웹 머신러닝: 4화
+https://www.youtube.com/watch?v=hV5S4iQhNkI
+
+
+MediaPipe Face Landmarker 소개 및 핸즈프리 게임 구현 방법
+https://www.youtube.com/watch?v=3NePkYhFkiw
+
+
+포즈 랜드마크 감지 - MediaPipe를 활용한 웹 머신러닝: 8화
+https://www.youtube.com/watch?v=oaK74yozU9g
+
+아래의 사항을 생각하고 작품을 만들어보자
+관객의 행동 ex)손을 움직인다
+작품의 반응 ex)유체 효과와 레이저 손이 반응한다
+기획의 질문 ex)모니터의 포털이 실제공간으로 이어진다면?
+
+
+시선 기반 인터랙션 사례
+눈으로 시선을 통해서 만든 작업
+AI art as a mirror, attention level
+https://www.youtube.com/watch?v=4SBZPLclmZs
+
+손 추적과 포털 연출
+
+음악
+Making Music with Hand Movement (Arp + Drum Machine)
+https://www.youtube.com/watch?v=JepIs-DTBgk&list=RDJepIs-DTBgk&start_radio=1
+
+Creating 3D Shapes with Hand Movements
+https://youtu.be/oE3a0ghsrBk?si=hAEMiyOGej4nzdZT
+
+interactive installations 
+katherine chan
+https://www.youtube.com/@katherinechan3317
+
+재미있는거 많았던 사이트
+https://www.chenyujun.com/interactiveinstallations
+언리얼+뎁스캠 
+
+
+파티클을 많이 쓰는 작품은 엔진에서 작업하는 것이 더 안정적일 것이다.
+
+
+"절 갈 여유 없어서 만들었죠" 취준생이 만든 '온라인 산사'｜ TJB 대전·세종·충남뉴스
+https://www.youtube.com/watch?v=8LeHWgApCP4
+
+번외: CLAUDE CODE ADVANCED FULL COURSE (3 HOURS)
+https://www.youtube.com/watch?v=UPtmKh1vMN8
+

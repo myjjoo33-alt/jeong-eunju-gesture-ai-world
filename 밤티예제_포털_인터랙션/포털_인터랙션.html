@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>다른 세계로 · Portal Lab</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080c16;color:#eef5ff;font-family:system-ui,sans-serif;overflow:hidden}video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}video{transform:scaleX(-1);opacity:.8}canvas{touch-action:none}header{position:absolute;top:32px;left:36px;pointer-events:none}small{letter-spacing:.24em;color:#84e6ed;font-size:11px}h1{font-size:30px;font-weight:500;margin:10px 0}p{color:#aebbd0;font-size:14px;line-height:1.7}footer{position:absolute;bottom:28px;left:36px;right:36px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}button{border:1px solid #ffffff35;border-radius:30px;padding:12px 20px;background:#152337;color:white;cursor:pointer}button:first-child{background:#c3fff0;color:#102622}button:disabled{opacity:.5;cursor:wait}#status{font-size:13px;color:#c1cfe0;margin-left:auto;max-width:500px}#hint{position:absolute;top:36px;right:36px;font-size:12px;color:#9caec7} @media(max-width:600px){header{left:20px;top:20px}h1{font-size:24px}#hint{display:none}footer{left:20px;right:20px}#status{width:100%}}
+</style>
+<video id="camera" autoplay playsinline muted></video><canvas id="scene"></canvas>
+<header><small>PORTAL LAB / EXPERIMENT 01</small><h1>원을 그려, 다른 세계로.</h1><p>마우스를 누른 채 원을 그리고 놓아보세요.<br>원을 열 때마다 봄 · 여름 · 가을 · 겨울로 떠나요.</p></header>
+<div id="hint">MOUSE INPUT · WEBCAM BACKGROUND</div>
+<footer><button id="start">웹캠 켜기</button><button id="reset">포털 지우기</button><span id="status" role="status" aria-live="polite">웹캠을 켜세요. 미확보 배경은 임시로 늘려 채웁니다.</span></footer>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
+<script>
+// 카메라 영상은 메모리에서만 처리하며 녹화·업로드하지 않습니다.
+const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d'),video=document.querySelector('#camera'),status=document.querySelector('#status');
+let w,h,points=[],drawing=false,portal=null,activePointer=null,stream,cleanBackground=null,captureTimer=null;
+const seasonOrder=['spring','summer','autumn','winter'];
+const seasonNames={spring:'봄',summer:'여름',autumn:'가을',winter:'겨울'};
+let nextSeason=0;
+function resize(){w=innerWidth;h=innerHeight;const d=Math.min(devicePixelRatio,2);canvas.width=w*d;canvas.height=h*d;ctx.setTransform(d,0,0,d,0,0);portal=null;points=[];drawing=false;activePointer=null;}
+addEventListener('resize',resize);resize();
+// Input adapter: future hand landmarks can call beginStroke / moveStroke / endStroke.
+function beginStroke(x,y){points=[{x,y}];drawing=true;}
+function moveStroke(x,y){if(drawing&&Math.hypot(x-points.at(-1).x,y-points.at(-1).y)>3)points.push({x,y});}
+function endStroke(){if(!drawing)return;drawing=false;const result=recognizeCircle(points);if(result){portal={...result,born:performance.now(),world:seasonOrder[nextSeason]};nextSeason=(nextSeason+1)%seasonOrder.length;const label=seasonNames[portal.world];status.textContent=label+' 풍경의 포털이 열렸어요. '+(stream?'카메라를 보며 움직여 보세요.':'웹캠을 켜면 포털 안에 내 모습이 나타나요.');}else status.textContent='조금 더 둥글게, 시작점 가까이 돌아와 원을 완성해 주세요.';points=[];}
+function recognizeCircle(p){if(p.length<16)return null;const xs=p.map(q=>q.x),ys=p.map(q=>q.y),bw=Math.max(...xs)-Math.min(...xs),bh=Math.max(...ys)-Math.min(...ys),x=(Math.max(...xs)+Math.min(...xs))/2,y=(Math.max(...ys)+Math.min(...ys))/2,r=(bw+bh)/4;if(r<35||Math.min(bw,bh)/Math.max(bw,bh)<.65||Math.hypot(p[0].x-p.at(-1).x,p[0].y-p.at(-1).y)>r*.65)return null;let error=0,length=0,turn=0;for(let i=0;i<p.length;i++){error+=Math.abs(Math.hypot(p[i].x-x,p[i].y-y)-r);if(i){length+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y);let a=Math.atan2(p[i].y-y,p[i].x-x)-Math.atan2(p[i-1].y-y,p[i-1].x-x);turn+=Math.atan2(Math.sin(a),Math.cos(a));}}return error/p.length/r<.23&&length/r>4.6&&length/r<9&&Math.abs(turn)>5?{x,y,r}:null;}
+canvas.addEventListener('pointerdown',e=>{if(activePointer!==null||e.button!==0)return;activePointer=e.pointerId;canvas.setPointerCapture(e.pointerId);beginStroke(e.clientX,e.clientY);});
+canvas.addEventListener('pointermove',e=>{if(e.pointerId===activePointer)moveStroke(e.clientX,e.clientY);});
+canvas.addEventListener('pointerup',e=>{if(e.pointerId!==activePointer)return;moveStroke(e.clientX,e.clientY);endStroke();activePointer=null;});
+canvas.addEventListener('pointercancel',()=>{drawing=false;points=[];activePointer=null;});
+document.querySelector('#reset').onclick=()=>{portal=null;points=[];status.textContent='새로운 원을 그려 포털을 열어보세요.';};
+document.querySelector('#start').onclick=async function(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;cleanBackground=null;portal=null;video.srcObject=null;this.textContent='웹캠 켜기';status.textContent='웹캠을 껐어요.';return;}this.disabled=true;try{if(!navigator.mediaDevices?.getUserMedia)throw Error('unsupported');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});video.srcObject=stream;await video.play();this.textContent='웹캠 끄기';status.textContent='인물 분리 준비 중…';await prepareSegmentation();}catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;this.textContent='웹캠 다시 시도';status.textContent=e.name==='NotAllowedError'?'카메라 권한이 필요해요. 브라우저의 카메라 접근을 허용해 주세요.':'카메라 또는 인식 프로그램을 불러오지 못했어요. 인터넷 연결과 카메라를 확인하고 Chrome·Edge에서 다시 열어 주세요.';}finally{this.disabled=false;}};
+// Mirror and fit the whole camera view inside the portal, independent of its location.
+function drawPortalSelf(x,y,r,t){
+  if(!stream||video.readyState<2||!video.videoWidth)return;
+  const size=r*2,scale=Math.max(size/(backgroundReady?bw:video.videoWidth),size/(backgroundReady?bh:video.videoHeight));
+  const vw=(backgroundReady?bw:video.videoWidth)*scale,vh=(backgroundReady?bh:video.videoHeight)*scale;
+  ctx.save();
+  ctx.translate(x,y);ctx.scale(-1,1);
+  ctx.globalAlpha=.88;
+  const season=portal?.world||'spring';
+  ctx.filter='saturate(1.02) contrast(1.02) brightness(1.06)';
+  ctx.drawImage(backgroundReady?person:video,-vw/2,-vh/2,vw,vh);
+  ctx.filter='none';ctx.globalAlpha=1;
+  // Color the live reflection to make it feel part of the other world.
+  ctx.globalCompositeOperation='screen';
+  const tint=ctx.createLinearGradient(0,-r,0,r);
+  tint.addColorStop(0,{spring:'rgba(255,180,207,.12)',summer:'rgba(255,235,164,.10)',autumn:'rgba(255,187,105,.14)',winter:'rgba(193,225,255,.15)'}[season]);
+  tint.addColorStop(1,'rgba(113,213,230,.08)');
+  ctx.fillStyle=tint;ctx.fillRect(-r,-r,size,size);
+  ctx.globalCompositeOperation='source-over';
+  const shade=ctx.createRadialGradient(0,0,r*.45,0,0,r);
+  shade.addColorStop(0,'transparent');shade.addColorStop(1,'rgba(21,70,87,.20)');
+  ctx.fillStyle=shade;ctx.fillRect(-r,-r,size,size);
+  ctx.restore();
+}
+
+const background=document.createElement('canvas'),person=document.createElement('canvas'),sample=document.createElement('canvas'),mask=document.createElement('canvas');
+const bw=480,bh=360;
+for(const c of [background,person,sample,mask]){c.width=bw;c.height=bh;}
+const bc=background.getContext('2d'),pc=person.getContext('2d'),sc=sample.getContext('2d',{willReadFrequently:true}),mc=mask.getContext('2d',{willReadFrequently:true});
+let backgroundReady=false,segmenter=null,processing=false;
+const known=new Uint8Array(bw*bh);
+function drawCover(source){const scale=Math.max(w/source.width,h/source.height);ctx.save();ctx.translate(w,0);ctx.scale(-1,1);ctx.drawImage(source,(w-source.width*scale)/2,(h-source.height*scale)/2,source.width*scale,source.height*scale);ctx.restore();}
+async function prepareSegmentation(){
+ if(typeof SelfieSegmentation==='undefined')throw Error('model load');
+ if(!segmenter){segmenter=new SelfieSegmentation({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/'+file});segmenter.setOptions({modelSelection:1});segmenter.onResults(updateBackground);}
+ known.fill(0);backgroundReady=false;
+ if(!processing)processCamera();
+}
+async function processCamera(){
+ if(!stream){processing=false;return;}processing=true;
+ try{await segmenter.send({image:video});}catch(e){status.textContent='인물 분리를 불러오지 못했어요. 인터넷 연결 후 웹캠을 다시 켜 주세요.';processing=false;return;}
+ setTimeout(processCamera,45);
+}
+function updateBackground(results){
+ sc.drawImage(results.image,0,0,bw,bh);mc.clearRect(0,0,bw,bh);mc.drawImage(results.segmentationMask,0,0,bw,bh);
+ const frame=sc.getImageData(0,0,bw,bh),m=mc.getImageData(0,0,bw,bh),out=bc.getImageData(0,0,bw,bh);
+ // Keep only confidently visible background pixels across frames.
+ for(let i=0;i<known.length;i++){const k=i*4;if(m.data[k]<20){known[i]=1;out.data[k]=frame.data[k];out.data[k+1]=frame.data[k+1];out.data[k+2]=frame.data[k+2];out.data[k+3]=255;}}
+ // Unknown areas borrow the nearest available room pixel in each row.
+ for(let y=0;y<bh;y++){let nearest=-1;const right=new Int32Array(bw);right.fill(-1);for(let x=bw-1;x>=0;x--){if(known[y*bw+x])nearest=x;right[x]=nearest;}let left=-1;for(let x=0;x<bw;x++){const i=y*bw+x,k=i*4;if(known[i]){left=x;continue;}const rx=right[x],nx=left<0?rx:rx<0?left:x-left<rx-x?left:rx;if(nx>=0){const q=(y*bw+nx)*4;out.data[k]=frame.data[q];out.data[k+1]=frame.data[q+1];out.data[k+2]=frame.data[q+2];}else{out.data[k]=70;out.data[k+1]=75;out.data[k+2]=80;}out.data[k+3]=255;}}
+ bc.putImageData(out,0,0);
+ pc.clearRect(0,0,bw,bh);pc.globalCompositeOperation='source-over';pc.drawImage(results.segmentationMask,0,0,bw,bh);pc.globalCompositeOperation='source-in';pc.drawImage(results.image,0,0,bw,bh);pc.globalCompositeOperation='source-over';
+ if(!backgroundReady)status.textContent='준비 완료! 좌우로 움직이면 배경이 채워져요. 원을 그려 포털을 여세요.';backgroundReady=true;
+}
+
+// Static landscapes are cached; only weather, clouds, and sun glitter animate.
+const seasonPalettes={
+ spring:{sky:['#86c9e4','#d7e9ed','#ffe4de'],hills:['#abc4ba','#789e8d','#527d71'],water:['#95cfd1','#397d91'],bank:'#719785',foliage:['#ffe2ec','#f7b5cf','#e993b8'],trunk:'#775d61'},
+ summer:{sky:['#47afe7','#a7dfef','#e4f3e0'],hills:['#81b7ad','#438e7e','#216c60'],water:['#5dcad4','#147c9d'],bank:'#337c59',foliage:['#3b9366','#66af70','#26744f'],trunk:'#68594a'},
+ autumn:{sky:['#81bada','#e1e7da','#ffe4b3'],hills:['#c9b38c','#ac8b60','#856744'],water:['#b4cfbe','#547e85'],bank:'#9e783e',foliage:['#df8b30','#c65c2e','#e9af45'],trunk:'#77503b'},
+ winter:{sky:['#8fbcd9','#dbeaf1','#f1f5f2'],hills:['#dbe5ec','#bdcfdb','#8eaabf'],water:['#d8edf0','#8bb8cc'],bank:'#e7eff3',foliage:['#5b8291','#e3eef1','#f8fbfc'],trunk:'#77909a'}
+};
+function seasonRandom(seed){return ()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+function paintDestination(season){
+ const destination=document.createElement('canvas');destination.width=destination.height=720;
+ const dc=destination.getContext('2d'),p=seasonPalettes[season],random=seasonRandom(19),horizon=435;
+ const sky=dc.createLinearGradient(0,0,0,horizon);
+ p.sky.forEach((color,i)=>sky.addColorStop(i/2,color));dc.fillStyle=sky;dc.fillRect(0,0,720,720);
+ const halo=dc.createRadialGradient(470,180,15,470,180,140);
+ halo.addColorStop(0,'rgba(255,248,207,.65)');halo.addColorStop(1,'rgba(255,248,207,0)');
+ dc.fillStyle=halo;dc.fillRect(330,40,280,280);
+ dc.fillStyle=season==='winter'?'#fffdf2':'#fff3c4';dc.beginPath();dc.arc(470,180,30,0,Math.PI*2);dc.fill();
+ const layers=[{base:391,height:126},{base:422,height:107},{base:448,height:77}];
+ layers.forEach((layer,i)=>{
+  dc.beginPath();dc.moveTo(-20,horizon+12);
+  for(let x=-20;x<=750;x+=18){
+   const ridge=Math.sin(x*.012+layer.base)*.25+Math.sin(x*.029)*.12+random()*.24;
+   dc.lineTo(x,layer.base-layer.height*(.35+ridge));
+  }
+  dc.lineTo(740,horizon+12);dc.closePath();dc.fillStyle=p.hills[i];dc.fill();
+ });
+ // The reflected mountains retain the same silhouette across the four seasons.
+ dc.save();dc.translate(0,horizon*2);dc.scale(1,-1);
+ dc.drawImage(destination,0,150,720,285,0,150,720,285);dc.restore();
+ const water=dc.createLinearGradient(0,horizon,0,720);
+ water.addColorStop(0,p.water[0]);water.addColorStop(1,p.water[1]);
+ dc.globalAlpha=season==='winter'?.72:.57;dc.fillStyle=water;dc.fillRect(0,horizon,720,285);dc.globalAlpha=1;
+ for(let i=0;i<110;i++){
+  const y=445+random()*275,x=random()*720;
+  dc.strokeStyle=season==='winter'?'rgba(249,255,255,.32)':'rgba(232,255,247,.16)';
+  dc.lineWidth=.6;dc.beginPath();dc.moveTo(x,y);dc.lineTo(x+4+random()*27,y);dc.stroke();
+ }
+ // Near banks and trees frame the lake, leaving the middle open for the person.
+ dc.fillStyle=p.bank;dc.beginPath();dc.moveTo(0,534);dc.quadraticCurveTo(116,559,190,720);dc.lineTo(0,720);dc.fill();
+ dc.beginPath();dc.moveTo(720,553);dc.quadraticCurveTo(621,571,550,720);dc.lineTo(720,720);dc.fill();
+ for(const [x,y,size] of [[38,590,1.3],[122,631,.84],[650,610,1.16],[707,566,.82]]){
+  dc.save();dc.translate(x,y);dc.scale(size,size);
+  dc.strokeStyle=p.trunk;dc.lineWidth=7;dc.lineCap='round';
+  dc.beginPath();dc.moveTo(0,0);dc.lineTo(-5,-123);dc.moveTo(-2,-58);dc.lineTo(-43,-110);dc.moveTo(-3,-82);dc.lineTo(36,-137);dc.stroke();
+  if(season==='winter'){
+   for(let j=0;j<4;j++){
+    const top=-176+j*30,width=27+j*10;
+    dc.fillStyle=p.foliage[0];dc.beginPath();dc.moveTo(0,top);dc.lineTo(-width,top+61);dc.lineTo(width,top+61);dc.closePath();dc.fill();
+    dc.fillStyle=j%2?p.foliage[1]:p.foliage[2];dc.beginPath();dc.moveTo(0,top);dc.lineTo(-width*.83,top+45);dc.quadraticCurveTo(0,top+35,width*.83,top+45);dc.closePath();dc.fill();
+   }
+  }else{
+   for(let j=0;j<62;j++){
+    const a=random()*Math.PI*2,dist=Math.sqrt(random());
+    const cx=Math.cos(a)*65*dist,cy=-127+Math.sin(a)*48*dist;
+    dc.fillStyle=p.foliage[j%3];dc.beginPath();dc.arc(cx,cy,10+random()*12,0,Math.PI*2);dc.fill();
+   }
+  }
+  dc.restore();
+ }
+ const shade=dc.createRadialGradient(360,330,180,360,360,510);
+ shade.addColorStop(0,'rgba(17,62,75,0)');shade.addColorStop(1,'rgba(17,62,75,.17)');
+ dc.fillStyle=shade;dc.fillRect(0,0,720,720);return destination;
+}
+const destinations=Object.fromEntries(seasonOrder.map(season=>[season,paintDestination(season)]));
+const weatherRandom=seasonRandom(71);
+const weatherParticles=Array.from({length:100},()=>({x:weatherRandom()*800,y:weatherRandom()*800,phase:weatherRandom()*Math.PI*2,size:2+weatherRandom()*5,speed:22+weatherRandom()*37}));
+const waterGlints=Array.from({length:90},()=>({x:weatherRandom()*720,y:445+weatherRandom()*270,phase:weatherRandom()*Math.PI*2,size:2+weatherRandom()*7}));
+const cloudTexture=document.createElement('canvas');cloudTexture.width=280;cloudTexture.height=100;
+const cloudCtx=cloudTexture.getContext('2d');
+for(const [x,y,rx,ry] of [[80,59,64,22],[133,44,58,32],[192,57,61,25],[141,69,105,19]]){
+ cloudCtx.save();cloudCtx.translate(x,y);cloudCtx.scale(1,ry/rx);
+ const glow=cloudCtx.createRadialGradient(0,0,0,0,0,rx);glow.addColorStop(0,'rgba(255,255,251,.85)');glow.addColorStop(.55,'rgba(255,255,251,.6)');glow.addColorStop(1,'rgba(255,255,251,0)');
+ cloudCtx.fillStyle=glow;cloudCtx.fillRect(-rx,-rx,rx*2,rx*2);cloudCtx.restore();
+}
+function drawPortalWorld(x,y,r,world,age){
+ ctx.drawImage(destinations[world],x-r,y-r,r*2,r*2);
+ const seconds=age/1000;
+ ctx.save();ctx.translate(x-r,y-r);ctx.scale(r*2/720,r*2/720);
+ if(world==='summer'){
+  ctx.save();ctx.beginPath();ctx.rect(0,0,720,302);ctx.clip();
+  for(let i=0;i<4;i++){
+   const cx=((i*263+seconds*(7+i*2))%1080)-280;
+   ctx.globalAlpha=.85;ctx.drawImage(cloudTexture,cx,90+(i%3)*55,280,100);
+  }
+  ctx.restore();
+  // Sun glitter flickers independently on many tiny wave crests.
+  ctx.save();ctx.globalCompositeOperation='screen';
+  for(const glint of waterGlints){
+   const shine=Math.max(0,Math.sin(seconds*2.8+glint.phase))**8;
+   const gx=glint.x+Math.sin(seconds*.7+glint.phase)*4;
+   ctx.globalAlpha=.12+shine*.85;ctx.strokeStyle='#fffbd8';ctx.lineWidth=.6+shine;
+   ctx.beginPath();ctx.moveTo(gx-glint.size,glint.y);ctx.lineTo(gx+glint.size,glint.y);ctx.stroke();
+   if(shine>.7){ctx.beginPath();ctx.moveTo(gx,glint.y-3);ctx.lineTo(gx,glint.y+3);ctx.stroke();}
+  }
+  ctx.restore();
+ }
+ ctx.restore();
+}
+function drawSeasonWeather(x,y,r,world,age){
+ if(world==='summer')return;
+ const seconds=age/1000,count=world==='winter'?100:world==='spring'?65:55;
+ ctx.save();ctx.translate(x-r,y-r);ctx.scale(r*2/720,r*2/720);
+ for(let i=0;i<count;i++){
+  const p=weatherParticles[i],snow=world==='winter';
+  const drift=seconds*(snow?9:24)+Math.sin(seconds*(snow?.6:1.2)+p.phase)*(snow?13:34);
+  const px=((p.x+drift)%800+800)%800-40,py=(p.y+seconds*p.speed)%800-40;
+  ctx.save();ctx.translate(px,py);ctx.globalAlpha=snow?.55+(i%4)*.12:.82;
+  if(snow){
+   ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(0,0,p.size*.43,0,Math.PI*2);ctx.fill();
+   if(i%8===0){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=.8;ctx.rotate(p.phase+seconds*.2);ctx.beginPath();for(let j=0;j<3;j++){const a=j*Math.PI/3;ctx.moveTo(-Math.cos(a)*5,-Math.sin(a)*5);ctx.lineTo(Math.cos(a)*5,Math.sin(a)*5);}ctx.stroke();}
+  }else{
+   ctx.rotate(p.phase+seconds*(world==='spring'?.7:1.2));ctx.scale(.4+.6*Math.abs(Math.sin(seconds*1.7+p.phase)),1);
+   const size=p.size*(world==='autumn'?1.8:1.2);
+   if(world==='spring'){
+    ctx.fillStyle=['#fff0f6','#ffc0d8','#f695bc'][i%3];ctx.strokeStyle='rgba(202,102,144,.45)';ctx.lineWidth=.65;
+    ctx.beginPath();ctx.moveTo(0,-size);ctx.bezierCurveTo(size*1.2,-size*.5,size*.9,size*.8,0,size);ctx.bezierCurveTo(-size*.9,size*.8,-size*1.2,-size*.5,-size*.25,-size*.9);ctx.lineTo(0,-size*.55);ctx.closePath();ctx.fill();ctx.stroke();
+   }else{
+    ctx.fillStyle=['#c95126','#e68b28','#bc632a','#efb348'][i%4];ctx.strokeStyle='#915127';ctx.lineWidth=.7;
+    ctx.beginPath();ctx.moveTo(0,-size);ctx.bezierCurveTo(size,0,size*.7,size*.7,0,size);ctx.bezierCurveTo(-size*.7,size*.7,-size,0,0,-size);ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,-size*.65);ctx.lineTo(0,size*1.25);ctx.moveTo(0,size*.15);ctx.lineTo(size*.4,-size*.12);ctx.moveTo(0,size*.4);ctx.lineTo(-size*.4,size*.12);ctx.stroke();
+   }
+  }
+  ctx.restore();
+ }
+ ctx.restore();
+}function drawPortalRings(x,y,R,open,age){
+ const gap=Math.max(3,Math.min(7,R*.035));
+ ctx.save();ctx.globalCompositeOperation='lighter';
+ // Six concentric rings breathe at different phases, always outside the opening.
+ for(let i=0;i<6;i++){
+  const phase=age*.0022-i*.8;
+  const pulse=(Math.sin(phase)+1)*.5;
+  const breath=(Math.sin(age*.0022)+1)*.5*Math.min(18,8+R*.04);
+  const radius=R+open*(3+i*gap+breath+pulse*gap*.85);
+  ctx.globalAlpha=open*(.28+.42*pulse+.10*Math.sin(age*.009+i*2));
+  ctx.shadowColor='#ff660b';ctx.shadowBlur=12+10*pulse;
+  ctx.strokeStyle=['#ff791b','#ffc060','#ff6610','#ffad38','#ff8225','#ffd58a'][i];
+  ctx.lineWidth=i===0?2.4:1+pulse*.9;
+  ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.stroke();
+ }
+ // Short outward streaks give the orange glow a welding-spark texture.
+ for(let i=0;i<84;i++){
+  const life=((age*.00065+i*.6180339)%1+1)%1;
+  const angle=i*2.399963+Math.sin(i*17)*.12;
+  const distance=R+open*(5+life*(22+gap*6));
+  const length=open*(2+Math.sin(i*7)**2*9)*(1-life);
+  const sx=x+Math.cos(angle)*distance,sy=y+Math.sin(angle)*distance+life*life*12*open;
+  ctx.globalAlpha=open*(1-life)*(.35+.5*Math.sin(i*13)**2);
+  ctx.strokeStyle=i%4===0?'#fff0c2':i%2?'#ff8d21':'#ff5108';
+  ctx.shadowBlur=7;ctx.lineWidth=i%3===0?1.5:.8;
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(angle)*length,sy+Math.sin(angle)*length);ctx.stroke();
+ }
+ ctx.restore();
+}
+// A click-through overlay keeps sparks visible even above the footer buttons.
+const sparkCanvas=document.createElement('canvas');
+sparkCanvas.id='cursor-effects';sparkCanvas.setAttribute('aria-hidden','true');
+sparkCanvas.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;';
+document.body.appendChild(sparkCanvas);
+const sparkCtx=sparkCanvas.getContext('2d');
+const sparkCursor={x:0,y:0,visible:false};
+let cursorSparks=[],sparkLastTime=null,sparkBudget=0,burstClock=0;
+function resizeSparks(){
+ const d=Math.min(devicePixelRatio,2);
+ sparkCanvas.width=innerWidth*d;sparkCanvas.height=innerHeight*d;
+ sparkCtx.setTransform(d,0,0,d,0,0);cursorSparks=[];sparkBudget=0;burstClock=0;
+}
+addEventListener('resize',resizeSparks);resizeSparks();
+function followSparkCursor(e){
+ if(e.pointerType!=='mouse'&&e.pointerType!=='pen')return;
+ sparkCursor.x=e.clientX;sparkCursor.y=e.clientY;sparkCursor.visible=true;
+}
+addEventListener('pointermove',followSparkCursor,{passive:true});
+addEventListener('pointerdown',followSparkCursor,{passive:true});
+// Leaving the page stops emission; existing sparks finish their short flight.
+document.addEventListener('pointerout',e=>{if(e.relatedTarget===null)sparkCursor.visible=false;});
+function pauseCursorSparks(){
+ sparkCursor.visible=false;cursorSparks=[];sparkBudget=0;burstClock=0;sparkLastTime=null;
+ sparkCtx.clearRect(0,0,innerWidth,innerHeight);
+}
+addEventListener('blur',pauseCursorSparks);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseCursorSparks();});
+function emitCursorSparks(count){
+ const colors=['#ff570a','#ff7c16','#ffa02b','#ffca68','#fff0c2'];
+ for(let i=0;i<count&&cursorSparks.length<260;i++){
+  const angle=Math.random()*Math.PI*2,speed=65+Math.random()*215,life=.28+Math.random()*.55;
+  cursorSparks.push({x:sparkCursor.x,y:sparkCursor.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-35,
+   age:0,life,width:.65+Math.random()*1.3,color:colors[Math.floor(Math.random()*colors.length)]});
+ }
+}
+function drawCursorSparks(t){
+ const dt=sparkLastTime===null?1/60:Math.max(0,Math.min(.05,(t-sparkLastTime)/1000));sparkLastTime=t;
+ sparkCtx.clearRect(0,0,innerWidth,innerHeight);
+ if(sparkCursor.visible){
+  sparkBudget+=dt*160;burstClock+=dt;
+  const count=Math.floor(sparkBudget);sparkBudget-=count;emitCursorSparks(count);
+  // Small repeated radial bursts make a stationary cursor sparkle too.
+  if(burstClock>=.20){burstClock%=.20;emitCursorSparks(14);}
+ }else{sparkBudget=0;burstClock=0;}
+ sparkCtx.save();sparkCtx.globalCompositeOperation='lighter';sparkCtx.lineCap='round';
+ for(let i=cursorSparks.length-1;i>=0;i--){
+  const p=cursorSparks[i];p.age+=dt;
+  if(p.age>=p.life){cursorSparks.splice(i,1);continue;}
+  const drag=Math.exp(-1.6*dt);p.vx*=drag;p.vy=p.vy*drag+125*dt;
+  p.x+=p.vx*dt;p.y+=p.vy*dt;
+  sparkCtx.globalAlpha=Math.pow(1-p.age/p.life,1.35);
+  sparkCtx.strokeStyle=p.color;sparkCtx.lineWidth=p.width;
+  sparkCtx.shadowColor='#ff6a0b';sparkCtx.shadowBlur=7;
+  const tail=Math.min(.028,p.age);
+  sparkCtx.beginPath();sparkCtx.moveTo(p.x-p.vx*tail,p.y-p.vy*tail);sparkCtx.lineTo(p.x,p.y);sparkCtx.stroke();
+ }
+ if(sparkCursor.visible){
+  const glow=sparkCtx.createRadialGradient(sparkCursor.x,sparkCursor.y,0,sparkCursor.x,sparkCursor.y,12);
+  glow.addColorStop(0,'rgba(255,244,202,.9)');glow.addColorStop(.2,'rgba(255,153,37,.55)');glow.addColorStop(1,'rgba(255,91,8,0)');
+  sparkCtx.globalAlpha=.8+.2*Math.sin(t*.018);sparkCtx.shadowBlur=0;sparkCtx.fillStyle=glow;
+  sparkCtx.fillRect(sparkCursor.x-12,sparkCursor.y-12,24,24);
+ }
+ sparkCtx.restore();
+}
+function frame(t){
+ ctx.clearRect(0,0,w,h);
+ if(!stream){
+  const bg=ctx.createRadialGradient(w*.5,h*.5,0,w*.5,h*.5,w*.7);
+  bg.addColorStop(0,'#192c43');bg.addColorStop(1,'#080c16');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+ }
+ if(portal&&backgroundReady)drawCover(background);
+ if(portal){
+  const {x,y,r,born,world}=portal,age=Math.max(0,t-born),open=Math.min(1,age/650),R=r*(1-Math.pow(1-open,3));
+  ctx.save();ctx.beginPath();ctx.arc(x,y,R,0,Math.PI*2);ctx.clip();
+  drawPortalWorld(x,y,r,world,age);drawPortalSelf(x,y,r,t);drawSeasonWeather(x,y,r,world,age);ctx.restore();
+  drawPortalRings(x,y,R,open,age);
+ }
+ if(points.length){
+  ctx.save();ctx.strokeStyle='#ffb35b';ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.shadowColor='#ff7215';ctx.shadowBlur=14;ctx.beginPath();
+  points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();ctx.restore();
+ }
+ drawCursorSparks(t);
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</html>

@@ -1,0 +1,8 @@
+도구: 기본 제공 image_gen (추가 스킬 설치 없음)
+원본: 눈 내리는 숲속의 빛나는 크리스마스트리 (1).png
+편집 결과: tree-unlit.png
+편집 요청: 원본의 구도와 장식 위치, 달과 숲, 눈과 선물, 주변 랜턴은 유지하고 중앙 트리의 전구와 별 장식, 꼭대기의 가장 큰 별만 모두 꺼진 모습으로 편집. 따뜻한 자체 발광과 빛 번짐을 제거하고 푸른 달빛에 비치는 장식 모양은 남기기.
+실행: 꺼진 배경에 원본의 불빛 부분을 장식별로 겹쳐 표시. 40개 중 16개로 시작. 총 32개(80%)에 도달하면 꼭대기 별과 나머지를 함께 켜고 완성 연출.
+
+사용한 최종 프롬프트 원문:
+Edit target: the supplied Christmas tree forest image. Use case: lighting-weather. Create the exact SAME image as an unlit Christmas tree base plate for a browser interactive scene. Preserve the original exact 1200x1312 aspect ratio, framing, camera, every branch, snow shape, ornament, ribbon, bauble, star position, ground, gifts, moon, background, lanterns and side trees. No rearrangement and no new objects. Change ONLY the lights of the CENTRAL CHRISTMAS TREE: turn OFF ALL its golden string lights, all its glowing small star ornaments, and especially the huge five-point star at the very top at about x600,y130. Keep these physical ornaments visible but unlit, naturally dark, metallic surfaces faintly reflecting cold blue moonlight, without any emissive yellow glow or halos. Remove only the central tree's warm self-illumination on nearby pine branches and snow. Keep moonlit scene atmospheric and readable; do not black out the whole photo. Keep the ground lanterns and the lights hanging from the framing side trees exactly as in the original and still illuminated. Do not change decoration geometry or texture, do not reimagine scene. This dark base must align precisely with the original lit photograph for crossfade masking. Output only this unlit plate, no text or UI.

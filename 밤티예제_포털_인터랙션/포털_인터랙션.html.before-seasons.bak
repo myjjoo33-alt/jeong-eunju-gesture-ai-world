@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>다른 세계로 · Portal Lab</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080c16;color:#eef5ff;font-family:system-ui,sans-serif;overflow:hidden}video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}video{transform:scaleX(-1);opacity:.8}canvas{touch-action:none}header{position:absolute;top:32px;left:36px;pointer-events:none}small{letter-spacing:.24em;color:#84e6ed;font-size:11px}h1{font-size:30px;font-weight:500;margin:10px 0}p{color:#aebbd0;font-size:14px;line-height:1.7}footer{position:absolute;bottom:28px;left:36px;right:36px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}button{border:1px solid #ffffff35;border-radius:30px;padding:12px 20px;background:#152337;color:white;cursor:pointer}button:first-child{background:#c3fff0;color:#102622}button:disabled{opacity:.5;cursor:wait}#status{font-size:13px;color:#c1cfe0;margin-left:auto;max-width:500px}#hint{position:absolute;top:36px;right:36px;font-size:12px;color:#9caec7} @media(max-width:600px){header{left:20px;top:20px}h1{font-size:24px}#hint{display:none}footer{left:20px;right:20px}#status{width:100%}}
+</style>
+<video id="camera" autoplay playsinline muted></video><canvas id="scene"></canvas>
+<header><small>PORTAL LAB / EXPERIMENT 01</small><h1>원을 그려, 다른 세계로.</h1><p>마우스를 누른 채 원을 그리고 놓아보세요.<br>좌우로 움직여 배경을 채운 뒤 원을 그려보세요.</p></header>
+<div id="hint">MOUSE INPUT · WEBCAM BACKGROUND</div>
+<footer><button id="start">웹캠 켜기</button><button id="reset">포털 지우기</button><span id="status" role="status" aria-live="polite">웹캠을 켜세요. 미확보 배경은 임시로 늘려 채웁니다.</span></footer>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
+<script>
+// 카메라 영상은 메모리에서만 처리하며 녹화·업로드하지 않습니다.
+const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d'),video=document.querySelector('#camera'),status=document.querySelector('#status');
+let w,h,points=[],drawing=false,portal=null,activePointer=null,stream,cleanBackground=null,captureTimer=null;
+let nextWorld='night';
+function resize(){w=innerWidth;h=innerHeight;const d=Math.min(devicePixelRatio,2);canvas.width=w*d;canvas.height=h*d;ctx.setTransform(d,0,0,d,0,0);portal=null;points=[];drawing=false;activePointer=null;}
+addEventListener('resize',resize);resize();
+// Input adapter: future hand landmarks can call beginStroke / moveStroke / endStroke.
+function beginStroke(x,y){points=[{x,y}];drawing=true;}
+function moveStroke(x,y){if(drawing&&Math.hypot(x-points.at(-1).x,y-points.at(-1).y)>3)points.push({x,y});}
+function endStroke(){if(!drawing)return;drawing=false;const result=recognizeCircle(points);if(result){portal={...result,born:performance.now(),world:nextWorld};nextWorld=nextWorld==='night'?'day':'night';const label=portal.world==='day'?'낮':'밤';status.textContent=label+' 풍경의 포털이 열렸어요. '+(stream?'카메라를 보며 움직여 보세요.':'웹캠을 켜면 포털 안에 내 모습이 나타나요.');}else status.textContent='조금 더 둥글게, 시작점 가까이 돌아와 원을 완성해 주세요.';points=[];}
+function recognizeCircle(p){if(p.length<16)return null;const xs=p.map(q=>q.x),ys=p.map(q=>q.y),bw=Math.max(...xs)-Math.min(...xs),bh=Math.max(...ys)-Math.min(...ys),x=(Math.max(...xs)+Math.min(...xs))/2,y=(Math.max(...ys)+Math.min(...ys))/2,r=(bw+bh)/4;if(r<35||Math.min(bw,bh)/Math.max(bw,bh)<.65||Math.hypot(p[0].x-p.at(-1).x,p[0].y-p.at(-1).y)>r*.65)return null;let error=0,length=0,turn=0;for(let i=0;i<p.length;i++){error+=Math.abs(Math.hypot(p[i].x-x,p[i].y-y)-r);if(i){length+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y);let a=Math.atan2(p[i].y-y,p[i].x-x)-Math.atan2(p[i-1].y-y,p[i-1].x-x);turn+=Math.atan2(Math.sin(a),Math.cos(a));}}return error/p.length/r<.23&&length/r>4.6&&length/r<9&&Math.abs(turn)>5?{x,y,r}:null;}
+canvas.addEventListener('pointerdown',e=>{if(activePointer!==null||e.button!==0)return;activePointer=e.pointerId;canvas.setPointerCapture(e.pointerId);beginStroke(e.clientX,e.clientY);});
+canvas.addEventListener('pointermove',e=>{if(e.pointerId===activePointer)moveStroke(e.clientX,e.clientY);});
+canvas.addEventListener('pointerup',e=>{if(e.pointerId!==activePointer)return;moveStroke(e.clientX,e.clientY);endStroke();activePointer=null;});
+canvas.addEventListener('pointercancel',()=>{drawing=false;points=[];activePointer=null;});
+document.querySelector('#reset').onclick=()=>{portal=null;points=[];status.textContent='새로운 원을 그려 포털을 열어보세요.';};
+document.querySelector('#start').onclick=async function(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;cleanBackground=null;portal=null;video.srcObject=null;this.textContent='웹캠 켜기';status.textContent='웹캠을 껐어요.';return;}this.disabled=true;try{if(!navigator.mediaDevices?.getUserMedia)throw Error('unsupported');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});video.srcObject=stream;await video.play();this.textContent='웹캠 끄기';status.textContent='인물 분리 준비 중…';await prepareSegmentation();}catch(e){stream?.getTracks().forEach(t=>t.stop());stream=null;this.textContent='웹캠 다시 시도';status.textContent=e.name==='NotAllowedError'?'카메라 권한이 필요해요. 브라우저의 카메라 접근을 허용해 주세요.':'카메라 또는 인식 프로그램을 불러오지 못했어요. 인터넷 연결과 카메라를 확인하고 Chrome·Edge에서 다시 열어 주세요.';}finally{this.disabled=false;}};
+// Mirror and fit the whole camera view inside the portal, independent of its location.
+function drawPortalSelf(x,y,r,t){
+  if(!stream||video.readyState<2||!video.videoWidth)return;
+  const size=r*2,scale=Math.max(size/(backgroundReady?bw:video.videoWidth),size/(backgroundReady?bh:video.videoHeight));
+  const vw=(backgroundReady?bw:video.videoWidth)*scale,vh=(backgroundReady?bh:video.videoHeight)*scale;
+  ctx.save();
+  ctx.translate(x,y);ctx.scale(-1,1);
+  ctx.globalAlpha=.88;
+  const isDay=portal?.world==='day';
+  ctx.filter=isDay?'saturate(1.05) contrast(1.02) brightness(1.08)':'saturate(0.7) contrast(1.15)';
+  ctx.drawImage(backgroundReady?person:video,-vw/2,-vh/2,vw,vh);
+  ctx.filter='none';ctx.globalAlpha=1;
+  // Color the live reflection to make it feel part of the other world.
+  ctx.globalCompositeOperation='screen';
+  const tint=ctx.createLinearGradient(0,-r,0,r);
+  tint.addColorStop(0,isDay?'rgba(255,222,150,.12)':'rgba(113,56,220,.3)');
+  tint.addColorStop(1,isDay?'rgba(113,213,230,.10)':'rgba(0,220,193,.24)');
+  ctx.fillStyle=tint;ctx.fillRect(-r,-r,size,size);
+  ctx.globalCompositeOperation='source-over';
+  const shade=ctx.createRadialGradient(0,0,r*.45,0,0,r);
+  shade.addColorStop(0,'transparent');shade.addColorStop(1,isDay?'rgba(21,70,87,.25)':'rgba(6,9,37,.7)');
+  ctx.fillStyle=shade;ctx.fillRect(-r,-r,size,size);
+  ctx.restore();
+}
+
+const background=document.createElement('canvas'),person=document.createElement('canvas'),sample=document.createElement('canvas'),mask=document.createElement('canvas');
+const bw=480,bh=360;
+for(const c of [background,person,sample,mask]){c.width=bw;c.height=bh;}
+const bc=background.getContext('2d'),pc=person.getContext('2d'),sc=sample.getContext('2d',{willReadFrequently:true}),mc=mask.getContext('2d',{willReadFrequently:true});
+let backgroundReady=false,segmenter=null,processing=false;
+const known=new Uint8Array(bw*bh);
+function drawCover(source){const scale=Math.max(w/source.width,h/source.height);ctx.save();ctx.translate(w,0);ctx.scale(-1,1);ctx.drawImage(source,(w-source.width*scale)/2,(h-source.height*scale)/2,source.width*scale,source.height*scale);ctx.restore();}
+async function prepareSegmentation(){
+ if(typeof SelfieSegmentation==='undefined')throw Error('model load');
+ if(!segmenter){segmenter=new SelfieSegmentation({locateFile:file=>'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/'+file});segmenter.setOptions({modelSelection:1});segmenter.onResults(updateBackground);}
+ known.fill(0);backgroundReady=false;
+ if(!processing)processCamera();
+}
+async function processCamera(){
+ if(!stream){processing=false;return;}processing=true;
+ try{await segmenter.send({image:video});}catch(e){status.textContent='인물 분리를 불러오지 못했어요. 인터넷 연결 후 웹캠을 다시 켜 주세요.';processing=false;return;}
+ setTimeout(processCamera,45);
+}
+function updateBackground(results){
+ sc.drawImage(results.image,0,0,bw,bh);mc.clearRect(0,0,bw,bh);mc.drawImage(results.segmentationMask,0,0,bw,bh);
+ const frame=sc.getImageData(0,0,bw,bh),m=mc.getImageData(0,0,bw,bh),out=bc.getImageData(0,0,bw,bh);
+ // Keep only confidently visible background pixels across frames.
+ for(let i=0;i<known.length;i++){const k=i*4;if(m.data[k]<20){known[i]=1;out.data[k]=frame.data[k];out.data[k+1]=frame.data[k+1];out.data[k+2]=frame.data[k+2];out.data[k+3]=255;}}
+ // Unknown areas borrow the nearest available room pixel in each row.
+ for(let y=0;y<bh;y++){let nearest=-1;const right=new Int32Array(bw);right.fill(-1);for(let x=bw-1;x>=0;x--){if(known[y*bw+x])nearest=x;right[x]=nearest;}let left=-1;for(let x=0;x<bw;x++){const i=y*bw+x,k=i*4;if(known[i]){left=x;continue;}const rx=right[x],nx=left<0?rx:rx<0?left:x-left<rx-x?left:rx;if(nx>=0){const q=(y*bw+nx)*4;out.data[k]=frame.data[q];out.data[k+1]=frame.data[q+1];out.data[k+2]=frame.data[q+2];}else{out.data[k]=70;out.data[k+1]=75;out.data[k+2]=80;}out.data[k+3]=255;}}
+ bc.putImageData(out,0,0);
+ pc.clearRect(0,0,bw,bh);pc.globalCompositeOperation='source-over';pc.drawImage(results.segmentationMask,0,0,bw,bh);pc.globalCompositeOperation='source-in';pc.drawImage(results.image,0,0,bw,bh);pc.globalCompositeOperation='source-over';
+ if(!backgroundReady)status.textContent='준비 완료! 좌우로 움직이면 배경이 채워져요. 원을 그려 포털을 여세요.';backgroundReady=true;
+}
+
+// Cache both landscapes; opening a portal only selects a texture.
+function paintDestination(isDay){
+ const destination=document.createElement('canvas');
+ destination.width=destination.height=720;
+ const dc=destination.getContext('2d'),s=720,horizon=435;
+ let seed=19;
+ const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+ const sky=dc.createLinearGradient(0,0,0,horizon);
+ sky.addColorStop(0,isDay?'#53afe3':'#060d26');
+ sky.addColorStop(.55,isDay?'#a5dded':'#192449');
+ sky.addColorStop(1,isDay?'#f4edcb':'#687a91');
+ dc.fillStyle=sky;dc.fillRect(0,0,s,s);
+ const haze=dc.createRadialGradient(490,270,0,490,270,340);
+ haze.addColorStop(0,isDay?'rgba(255,244,202,.4)':'rgba(145,119,185,.28)');
+ haze.addColorStop(1,'rgba(145,119,185,0)');
+ dc.fillStyle=haze;dc.fillRect(0,0,s,horizon);
+ for(let i=0;i<190;i++){
+  const x=random()*s,y=random()*horizon,r=.35+random()*.95;
+  const alpha=(.22+random()*.65)*(1-y/horizon*.7);
+  if(!isDay){dc.globalAlpha=alpha;dc.fillStyle='#e2edff';dc.beginPath();dc.arc(x,y,r,0,Math.PI*2);dc.fill();}
+ }
+ dc.globalAlpha=1;
+ const halo=dc.createRadialGradient(470,198,20,470,198,isDay?145:110);
+ halo.addColorStop(0,isDay?'rgba(255,241,174,.6)':'rgba(212,236,249,.23)');
+ halo.addColorStop(1,'rgba(255,240,200,0)');
+ dc.fillStyle=halo;dc.fillRect(315,43,310,310);
+ const orb=dc.createRadialGradient(453,178,2,470,198,37);
+ orb.addColorStop(0,isDay?'#fffef0':'#f3f3e4');
+ orb.addColorStop(.7,isDay?'#fff2b4':'#d1e1de');
+ orb.addColorStop(1,isDay?'#ffd77a':'#89aeb8');
+ dc.fillStyle=orb;dc.beginPath();dc.arc(470,198,36,0,Math.PI*2);dc.fill();
+ dc.save();dc.beginPath();dc.arc(470,198,36,0,Math.PI*2);dc.clip();
+ for(let i=0;i<26;i++){
+  const x=434+random()*72,y=162+random()*72,r=1+random()*6;
+  if(!isDay){dc.fillStyle='rgba(92,132,150,.12)';dc.beginPath();dc.arc(x,y,r,0,Math.PI*2);dc.fill();}
+ }
+ dc.restore();
+ if(isDay){
+  // Soft elongated clouds, with the sun still visible between them.
+  for(const [x,y,rx,ry] of [[150,165,115,13],[245,178,90,10],[535,270,140,16],[390,283,100,10]]){
+   dc.save();dc.translate(x,y);dc.scale(1,ry/rx);
+   const cloud=dc.createRadialGradient(0,0,0,0,0,rx);
+   cloud.addColorStop(0,'rgba(255,255,247,.65)');cloud.addColorStop(1,'rgba(255,255,247,0)');
+   dc.fillStyle=cloud;dc.fillRect(-rx,-rx,rx*2,rx*2);dc.restore();
+  }
+ }
+ const layers=[
+  {base:391,height:126,color:isDay?'#8eb6bf':'#3c516d'},
+  {base:422,height:107,color:isDay?'#518c96':'#243d56'},
+  {base:448,height:77,color:isDay?'#286e75':'#142f43'}
+ ];
+ for(const layer of layers){
+  dc.beginPath();dc.moveTo(-20,horizon+12);
+  for(let x=-20;x<=s+30;x+=18){
+   const ridge=Math.sin(x*.012+layer.base)*.25+Math.sin(x*.029)*.12+random()*.24;
+   dc.lineTo(x,layer.base-layer.height*(.35+ridge));
+  }
+  dc.lineTo(s,horizon+12);dc.closePath();dc.fillStyle=layer.color;dc.fill();
+ }
+ dc.save();dc.translate(0,horizon*2);dc.scale(1,-1);
+ dc.drawImage(destination,0,horizon-(s-horizon),s,s-horizon,0,horizon-(s-horizon),s,s-horizon);
+ dc.restore();
+ const water=dc.createLinearGradient(0,horizon,0,s);
+ water.addColorStop(0,isDay?'rgba(46,158,176,.32)':'rgba(15,43,59,.46)');
+ water.addColorStop(1,isDay?'rgba(9,86,114,.86)':'rgba(3,17,31,.96)');
+ dc.fillStyle=water;dc.fillRect(0,horizon,s,s-horizon);
+ for(let i=0;i<100;i++){
+  const depth=random(),y=horizon+8+depth*(s-horizon),x=random()*s;
+  dc.strokeStyle=`rgba(${isDay?'210,248,239':'142,207,209'},${(isDay?.10:.03)+random()*.08})`;
+  dc.lineWidth=.5+depth;dc.beginPath();dc.moveTo(x,y);dc.lineTo(x+3+depth*32,y);dc.stroke();
+ }
+ for(let i=0;i<36;i++){
+  const depth=i/36,y=horizon+8+depth*230,span=6+depth*57;
+  dc.strokeStyle=`rgba(${isDay?'255,245,195':'197,226,222'},${(isDay?.38:.15)*(1-depth)})`;
+  dc.beginPath();dc.moveTo(470-span+random()*12,y);dc.lineTo(470+span-random()*12,y);dc.stroke();
+ }
+ const vignette=dc.createRadialGradient(360,330,160,360,360,490);
+ vignette.addColorStop(0,'rgba(3,9,23,0)');vignette.addColorStop(1,isDay?'rgba(15,67,82,.25)':'rgba(3,9,23,.7)');
+ dc.fillStyle=vignette;dc.fillRect(0,0,s,s);
+ return destination;
+}
+const destinations={night:paintDestination(false),day:paintDestination(true)};
+function drawPortalWorld(x,y,r,world){ctx.drawImage(destinations[world],x-r,y-r,r*2,r*2);}
+function drawPortalRings(x,y,R,open,age){
+ const gap=Math.max(3,Math.min(7,R*.035));
+ ctx.save();ctx.globalCompositeOperation='lighter';
+ // Six concentric rings breathe at different phases, always outside the opening.
+ for(let i=0;i<6;i++){
+  const phase=age*.0022-i*.8;
+  const pulse=(Math.sin(phase)+1)*.5;
+  const breath=(Math.sin(age*.0022)+1)*.5*Math.min(18,8+R*.04);
+  const radius=R+open*(3+i*gap+breath+pulse*gap*.85);
+  ctx.globalAlpha=open*(.28+.42*pulse+.10*Math.sin(age*.009+i*2));
+  ctx.shadowColor='#ff660b';ctx.shadowBlur=12+10*pulse;
+  ctx.strokeStyle=['#ff791b','#ffc060','#ff6610','#ffad38','#ff8225','#ffd58a'][i];
+  ctx.lineWidth=i===0?2.4:1+pulse*.9;
+  ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.stroke();
+ }
+ // Short outward streaks give the orange glow a welding-spark texture.
+ for(let i=0;i<84;i++){
+  const life=((age*.00065+i*.6180339)%1+1)%1;
+  const angle=i*2.399963+Math.sin(i*17)*.12;
+  const distance=R+open*(5+life*(22+gap*6));
+  const length=open*(2+Math.sin(i*7)**2*9)*(1-life);
+  const sx=x+Math.cos(angle)*distance,sy=y+Math.sin(angle)*distance+life*life*12*open;
+  ctx.globalAlpha=open*(1-life)*(.35+.5*Math.sin(i*13)**2);
+  ctx.strokeStyle=i%4===0?'#fff0c2':i%2?'#ff8d21':'#ff5108';
+  ctx.shadowBlur=7;ctx.lineWidth=i%3===0?1.5:.8;
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(angle)*length,sy+Math.sin(angle)*length);ctx.stroke();
+ }
+ ctx.restore();
+}
+// A click-through overlay keeps sparks visible even above the footer buttons.
+const sparkCanvas=document.createElement('canvas');
+sparkCanvas.id='cursor-effects';sparkCanvas.setAttribute('aria-hidden','true');
+sparkCanvas.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10;';
+document.body.appendChild(sparkCanvas);
+const sparkCtx=sparkCanvas.getContext('2d');
+const sparkCursor={x:0,y:0,visible:false};
+let cursorSparks=[],sparkLastTime=null,sparkBudget=0,burstClock=0;
+function resizeSparks(){
+ const d=Math.min(devicePixelRatio,2);
+ sparkCanvas.width=innerWidth*d;sparkCanvas.height=innerHeight*d;
+ sparkCtx.setTransform(d,0,0,d,0,0);cursorSparks=[];sparkBudget=0;burstClock=0;
+}
+addEventListener('resize',resizeSparks);resizeSparks();
+function followSparkCursor(e){
+ if(e.pointerType!=='mouse'&&e.pointerType!=='pen')return;
+ sparkCursor.x=e.clientX;sparkCursor.y=e.clientY;sparkCursor.visible=true;
+}
+addEventListener('pointermove',followSparkCursor,{passive:true});
+addEventListener('pointerdown',followSparkCursor,{passive:true});
+// Leaving the page stops emission; existing sparks finish their short flight.
+document.addEventListener('pointerout',e=>{if(e.relatedTarget===null)sparkCursor.visible=false;});
+function pauseCursorSparks(){
+ sparkCursor.visible=false;cursorSparks=[];sparkBudget=0;burstClock=0;sparkLastTime=null;
+ sparkCtx.clearRect(0,0,innerWidth,innerHeight);
+}
+addEventListener('blur',pauseCursorSparks);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseCursorSparks();});
+function emitCursorSparks(count){
+ const colors=['#ff570a','#ff7c16','#ffa02b','#ffca68','#fff0c2'];
+ for(let i=0;i<count&&cursorSparks.length<260;i++){
+  const angle=Math.random()*Math.PI*2,speed=65+Math.random()*215,life=.28+Math.random()*.55;
+  cursorSparks.push({x:sparkCursor.x,y:sparkCursor.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-35,
+   age:0,life,width:.65+Math.random()*1.3,color:colors[Math.floor(Math.random()*colors.length)]});
+ }
+}
+function drawCursorSparks(t){
+ const dt=sparkLastTime===null?1/60:Math.max(0,Math.min(.05,(t-sparkLastTime)/1000));sparkLastTime=t;
+ sparkCtx.clearRect(0,0,innerWidth,innerHeight);
+ if(sparkCursor.visible){
+  sparkBudget+=dt*160;burstClock+=dt;
+  const count=Math.floor(sparkBudget);sparkBudget-=count;emitCursorSparks(count);
+  // Small repeated radial bursts make a stationary cursor sparkle too.
+  if(burstClock>=.20){burstClock%=.20;emitCursorSparks(14);}
+ }else{sparkBudget=0;burstClock=0;}
+ sparkCtx.save();sparkCtx.globalCompositeOperation='lighter';sparkCtx.lineCap='round';
+ for(let i=cursorSparks.length-1;i>=0;i--){
+  const p=cursorSparks[i];p.age+=dt;
+  if(p.age>=p.life){cursorSparks.splice(i,1);continue;}
+  const drag=Math.exp(-1.6*dt);p.vx*=drag;p.vy=p.vy*drag+125*dt;
+  p.x+=p.vx*dt;p.y+=p.vy*dt;
+  sparkCtx.globalAlpha=Math.pow(1-p.age/p.life,1.35);
+  sparkCtx.strokeStyle=p.color;sparkCtx.lineWidth=p.width;
+  sparkCtx.shadowColor='#ff6a0b';sparkCtx.shadowBlur=7;
+  const tail=Math.min(.028,p.age);
+  sparkCtx.beginPath();sparkCtx.moveTo(p.x-p.vx*tail,p.y-p.vy*tail);sparkCtx.lineTo(p.x,p.y);sparkCtx.stroke();
+ }
+ if(sparkCursor.visible){
+  const glow=sparkCtx.createRadialGradient(sparkCursor.x,sparkCursor.y,0,sparkCursor.x,sparkCursor.y,12);
+  glow.addColorStop(0,'rgba(255,244,202,.9)');glow.addColorStop(.2,'rgba(255,153,37,.55)');glow.addColorStop(1,'rgba(255,91,8,0)');
+  sparkCtx.globalAlpha=.8+.2*Math.sin(t*.018);sparkCtx.shadowBlur=0;sparkCtx.fillStyle=glow;
+  sparkCtx.fillRect(sparkCursor.x-12,sparkCursor.y-12,24,24);
+ }
+ sparkCtx.restore();
+}
+function frame(t){
+ ctx.clearRect(0,0,w,h);
+ if(!stream){
+  const bg=ctx.createRadialGradient(w*.5,h*.5,0,w*.5,h*.5,w*.7);
+  bg.addColorStop(0,'#192c43');bg.addColorStop(1,'#080c16');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+ }
+ if(portal&&backgroundReady)drawCover(background);
+ if(portal){
+  const {x,y,r,born,world}=portal,age=Math.max(0,t-born),open=Math.min(1,age/650),R=r*(1-Math.pow(1-open,3));
+  ctx.save();ctx.beginPath();ctx.arc(x,y,R,0,Math.PI*2);ctx.clip();
+  drawPortalWorld(x,y,r,world);drawPortalSelf(x,y,r,t);ctx.restore();
+  drawPortalRings(x,y,R,open,age);
+ }
+ if(points.length){
+  ctx.save();ctx.strokeStyle='#ffb35b';ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.shadowColor='#ff7215';ctx.shadowBlur=14;ctx.beginPath();
+  points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();ctx.restore();
+ }
+ drawCursorSparks(t);
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</html>
