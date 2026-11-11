@@ -10,6 +10,20 @@
 .layout{grid-template-columns:minmax(0,min(720px,66vh)) 300px;justify-content:center}.scene{align-self:start;aspect-ratio:1199/1312;height:auto;min-height:0;max-height:none;background:#071420}.scene::after{display:none}.scene-art{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}.fairy{width:128px;z-index:3}.scene-note{z-index:2;bottom:14px;font-size:12px;color:#f5ecd5;background:#071420bb;padding:10px 12px;border-radius:12px;pointer-events:none}.scene-art circle[id^="reveal-"],#fullReveal,.lamp-glow,#topperGlow{transition:opacity .65s ease}.lit-image{transition:filter 1.8s ease}.complete .lit-image{filter:brightness(1.12) saturate(1.08)}.celebration{position:absolute;z-index:2;bottom:12%;left:6%;right:6%;text-align:center;padding:22px 16px;background:#0a1924d9;border:1px solid #e6c47788;border-radius:16px;color:#fff0ba;pointer-events:none;animation:celebrate-in 1.5s ease both}.celebration strong{display:block;font-size:clamp(20px,2vw,28px);font-weight:500}.celebration p{font-size:13px;line-height:1.8;margin:10px 0 0;color:#eee7d4}.lighting-panel{border-top:1px solid #2b3832;margin-top:20px;padding-top:18px}.lighting-label{display:flex;justify-content:space-between;font-size:14px;color:#ecdbad}.lighting-panel progress{width:100%;height:9px;margin:14px 0 8px;accent-color:#e8c779;border:0;border-radius:9px;overflow:hidden}.lighting-panel progress::-webkit-progress-bar{background:#24362f}.lighting-panel progress::-webkit-progress-value{background:#e8c779;transition:width .5s}.lighting-panel p{font-size:12px;line-height:1.8;color:#aebdaf;margin:5px 0 15px}.reset{width:100%;border:1px solid #47604d;color:#d4dfd1;background:transparent;padding:10px;font-size:12px}.camera-panel{padding:22px}.camera-view{margin:16px 0;aspect-ratio:16/9}#status{min-height:0}.privacy{margin-top:14px;padding-top:14px}@keyframes celebrate-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media(max-width:850px){.layout{grid-template-columns:1fr}.scene{width:100%;max-width:600px;margin:auto;min-height:0;height:auto;aspect-ratio:1199/1312}.fairy{width:110px}.camera-panel{max-width:600px;margin:auto}.celebration strong{font-size:22px}}@media(prefers-reduced-motion:reduce){.scene-art circle[id^="reveal-"],#fullReveal,.lamp-glow,#topperGlow,.lit-image{transition:none}.celebration{animation:none}}
 .scene-base{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}.background-error{position:absolute;inset:0;z-index:4;display:grid;place-content:center;text-align:center;padding:28px;color:#f4e4b9;background:#081622;font-size:16px;line-height:1.9}.background-error small{font-size:13px;color:#bbccc7}
 .particles{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}.fairy{width:clamp(92px,28%,170px);aspect-ratio:1;filter:drop-shadow(0 0 12px #ffb54f66)}.fairy-portrait{position:relative;width:100%;height:100%;animation:fairy-hover 2.6s ease-in-out infinite}.fairy-character{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:2;pointer-events:none}.fairy-face{position:absolute;left:50%;top:31.6%;width:25%;height:25%;border:0;border-radius:0;transform:translate(-50%,-50%);background:transparent;z-index:1}.sound-toggle{width:100%;margin-top:12px;padding:10px;background:#21382e;color:#e8d5a2;border:1px solid #48634b;font-size:13px}.sound-hint{font-size:11px;color:#a3b39f;line-height:1.7;margin:8px 0 0}@keyframes fairy-hover{0%,100%{transform:translateY(-2px) rotate(-1deg)}50%{transform:translateY(2px) rotate(1deg)}}@media(max-width:850px){.fairy{width:clamp(92px,28%,150px)}}@media(prefers-reduced-motion:reduce){.fairy-portrait{animation:none}}
+
+.fairy-rig{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:2;pointer-events:none}
+.fairy-rig g{transform-box:view-box}.fairy-left-arm{transform-origin:34.3% 54.5%;animation:fairy-wave-left 2.3s ease-in-out infinite}.fairy-right-arm{transform-origin:65.7% 54.5%;animation:fairy-wave-right 2.3s ease-in-out infinite .35s}
+.fairy-left-leg{transform-origin:45% 76%;animation:fairy-kick-left 2.8s ease-in-out infinite}.fairy-right-leg{transform-origin:54% 76%;animation:fairy-kick-right 2.8s ease-in-out infinite}
+.fairy-left-wing{transform-origin:37% 47%;animation:fairy-flutter-left .42s ease-in-out infinite alternate}.fairy-right-wing{transform-origin:63% 47%;animation:fairy-flutter-right .42s ease-in-out infinite alternate}
+.sound-buttons{display:flex;gap:8px;margin-top:12px}.sound-buttons button{margin:0;padding:10px 8px;font-size:12px}.sound-buttons .sound-preview{flex:0 0 94px;background:#34442e;color:#f2dfac;border:1px solid #6b744b}
+@keyframes fairy-hover{0%,100%{transform:translateY(-3px) rotate(calc(var(--fairy-lean,0deg) - 1.5deg))}50%{transform:translateY(3px) rotate(calc(var(--fairy-lean,0deg) + 1.5deg))}}
+@keyframes fairy-wave-left{0%,100%{transform:rotate(3deg)}50%{transform:rotate(15deg)}}
+@keyframes fairy-wave-right{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(-15deg)}}
+@keyframes fairy-kick-left{0%,100%{transform:rotate(6deg)}50%{transform:rotate(-7deg)}}
+@keyframes fairy-kick-right{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(6deg)}}
+@keyframes fairy-flutter-left{from{transform:scaleX(.8) rotate(-2deg)}to{transform:scaleX(1) rotate(2deg)}}
+@keyframes fairy-flutter-right{from{transform:scaleX(.8) rotate(2deg)}to{transform:scaleX(1) rotate(-2deg)}}
+@media(prefers-reduced-motion:reduce){.fairy-rig g{animation:none!important}}
 </style>
 </head>
 <body>
@@ -119,7 +133,34 @@
 <div class="fairy" id="fairy" hidden role="img" aria-label="내 실제 얼굴이 들어간 크리스마스 요정">
 <div class="fairy-portrait">
 <canvas class="fairy-face" id="fairyFace" width="256" height="256" aria-hidden="true"></canvas>
-<img class="fairy-character" id="fairyCharacter" src="./fairy-cursor.png" alt="" draggable="false">
+<img id="fairyCharacter" src="./fairy-cursor.png" alt="" hidden>
+<svg class="fairy-rig" viewBox="0 0 1254 1254" aria-hidden="true">
+<defs>
+<image id="fairySource" href="./fairy-cursor.png" width="1254" height="1254"/>
+<clipPath id="fairy-left-arm"><path d="M402 654 L447 678 L402 732 L388 771 L348 787 L306 777 L280 755 L289 736 L348 730 L365 684 Z"/></clipPath>
+<clipPath id="fairy-right-arm"><path d="M852 654 L807 678 L852 732 L866 771 L906 787 L948 777 L974 755 L965 736 L906 730 L889 684 Z"/></clipPath>
+<clipPath id="fairy-left-leg"><path d="M505 941 L622 941 L620 1219 Q569 1250 539 1200 L518 1090 Z"/></clipPath>
+<clipPath id="fairy-right-leg"><path d="M622 941 L745 941 L735 1090 L711 1200 Q685 1250 624 1219 Z"/></clipPath>
+<clipPath id="fairy-left-wing"><path d="M117 350 Q221 322 361 400 Q326 507 441 592 Q276 643 175 555 Q117 466 117 350 Z M214 633 Q302 594 419 625 L390 681 L349 739 Q286 782 207 773 Q191 727 214 633 Z"/></clipPath>
+<clipPath id="fairy-right-wing"><path d="M1137 350 Q1033 322 893 400 Q928 507 813 592 Q978 643 1079 555 Q1137 466 1137 350 Z M1040 633 Q952 594 835 625 L864 681 L905 739 Q968 782 1047 773 Q1063 727 1040 633 Z"/></clipPath>
+<mask id="fairy-body-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="1254" height="1254" style="mask-type:luminance">
+<rect width="1254" height="1254" fill="white"/>
+<path d="M402 654 L447 678 L402 732 L388 771 L348 787 L306 777 L280 755 L289 736 L348 730 L365 684 Z" fill="black"/>
+<path d="M852 654 L807 678 L852 732 L866 771 L906 787 L948 777 L974 755 L965 736 L906 730 L889 684 Z" fill="black"/>
+<path d="M505 970 L622 970 L620 1219 Q569 1250 539 1200 L518 1090 Z" fill="black"/>
+<path d="M622 970 L745 970 L735 1090 L711 1200 Q685 1250 624 1219 Z" fill="black"/>
+<path d="M117 350 Q221 322 361 400 Q326 507 441 592 Q276 643 175 555 Q117 466 117 350 Z M214 633 Q302 594 419 625 L390 681 L349 739 Q286 782 207 773 Q191 727 214 633 Z" fill="black"/>
+<path d="M1137 350 Q1033 322 893 400 Q928 507 813 592 Q978 643 1079 555 Q1137 466 1137 350 Z M1040 633 Q952 594 835 625 L864 681 L905 739 Q968 782 1047 773 Q1063 727 1040 633 Z" fill="black"/>
+</mask>
+</defs>
+<g class="fairy-left-wing"><use href="#fairySource" clip-path="url(#fairy-left-wing)"/></g>
+<g class="fairy-right-wing"><use href="#fairySource" clip-path="url(#fairy-right-wing)"/></g>
+<g class="fairy-left-leg"><use href="#fairySource" clip-path="url(#fairy-left-leg)"/></g>
+<g class="fairy-right-leg"><use href="#fairySource" clip-path="url(#fairy-right-leg)"/></g>
+<use href="#fairySource" mask="url(#fairy-body-mask)"/>
+<g class="fairy-left-arm"><use href="#fairySource" clip-path="url(#fairy-left-arm)"/></g>
+<g class="fairy-right-arm"><use href="#fairySource" clip-path="url(#fairy-right-arm)"/></g>
+</svg>
 </div>
 </div>
 <div class="celebration" id="celebration" hidden role="status"><strong>당신이 크리스마스를 밝혔어요!</strong><p>작은 빛들이 모여, 환한 트리가 완성됐어요.<br>메리 크리스마스!</p></div>
@@ -134,8 +175,8 @@
 </section>
 <div class="camera-view"><div class="placeholder" id="placeholder"><span aria-hidden="true">✧</span>이곳에 내 모습이 나타나요</div><video id="camera" autoplay muted playsinline hidden aria-label="내 웹캠 영상"></video></div>
 <div class="buttons"><button id="start" type="button">웹캠 켜기</button><button id="stop" type="button" disabled>끄기</button></div>
-<button class="sound-toggle" id="soundToggle" type="button" aria-pressed="true">소리 켜짐 · 누르면 끄기</button>
-<p class="sound-hint">장식마다 뾰로롱! 완성되면 징글벨이 연주돼요.</p>
+<div class="sound-buttons"><button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">소리 켜기</button><button class="sound-preview" id="soundPreview" type="button">종소리 확인</button></div>
+<p class="sound-hint" id="soundHint" role="status">조명에 닿을 때마다 뾰로롱! 큰 별이 켜지면 징글벨이 나와요.</p>
 <p class="sound-hint">이 체험은 PC의 Chrome에서 열어 주세요.<br>다른 창에서 카메라를 사용 중이면 먼저 꺼 주세요.</p>
 <div class="face-controls" id="faceControls" hidden>
 <label for="faceZoom">얼굴 확대 <output id="zoomValue" for="faceZoom">1.6배</output></label>
@@ -209,59 +250,92 @@ function paintParticles(now){
  }
  particleContext.globalAlpha=1;particleContext.globalCompositeOperation='source-over';
 }
-const soundToggle=document.getElementById('soundToggle');
-let soundEnabled=true,audioContext=null,audioMaster=null,carolStarted=false;
+const soundToggle=document.getElementById('soundToggle'),soundPreview=document.getElementById('soundPreview'),soundHint=document.getElementById('soundHint');
+let soundEnabled=true,audioContext=null,audioMaster=null,carolStarted=false,soundRun=0;
 const audioVoices=new Set();
-function unlockAudio(){
- if(!soundEnabled)return;
- const Audio=window.AudioContext||window.webkitAudioContext;
- if(!Audio){soundEnabled=false;soundToggle.textContent='이 브라우저는 소리를 지원하지 않아요';soundToggle.setAttribute('aria-pressed','false');return;}
- if(!audioContext){audioContext=new Audio();audioMaster=audioContext.createGain();audioMaster.gain.value=.45;audioMaster.connect(audioContext.destination);}
- audioMaster.gain.value=.45;
- if(audioContext.state==='suspended')void audioContext.resume().catch(()=>{soundEnabled=false;soundToggle.textContent='소리 다시 켜기';soundToggle.setAttribute('aria-pressed','false');});
+function updateSoundState(){
+ const ready=soundEnabled&&audioContext?.state==='running';
+ soundToggle.setAttribute('aria-pressed',String(ready));
+ soundToggle.textContent=ready?'소리 켜짐 · 누르면 끄기':soundEnabled?'소리 켜기':'소리 꺼짐 · 누르면 켜기';
+}
+async function unlockAudio(){
+ if(!soundEnabled)return false;
+ try{
+  const Audio=window.AudioContext||window.webkitAudioContext;
+  if(!Audio)throw new Error('이 브라우저에서는 소리를 지원하지 않아요.');
+  if(!audioContext){
+   audioContext=new Audio();
+   audioMaster=audioContext.createGain();audioMaster.gain.value=.8;
+   const limiter=audioContext.createDynamicsCompressor();limiter.threshold.value=-16;limiter.knee.value=18;limiter.ratio.value=4;limiter.attack.value=.003;limiter.release.value=.25;
+   audioMaster.connect(limiter);limiter.connect(audioContext.destination);
+   audioContext.addEventListener('statechange',updateSoundState);
+  }
+  if(audioContext.state!=='running')await audioContext.resume();
+  if(audioContext.state!=='running')throw new Error('소리 켜기 버튼을 한 번 더 눌러 주세요.');
+  audioMaster.gain.setValueAtTime(soundEnabled ? .8 : 0,audioContext.currentTime);
+  updateSoundState();return soundEnabled;
+ }catch(error){
+  updateSoundState();soundHint.textContent='소리를 시작하지 못했어요. 소리 켜기를 다시 눌러 주세요.';console.warn('Audio unavailable:',error.message);return false;
+ }
 }
 function stopSounds(){
+ soundRun++;
  for(const voice of audioVoices){try{voice.stop();}catch{}}
  audioVoices.clear();carolStarted=false;
 }
-function bellNote(frequency,when,duration,volume=.15){
- if(!soundEnabled||!audioContext||audioContext.state!=='running')return;
- const time=Math.max(audioContext.currentTime+.005,when);
- for(const [ratio,level] of [[1,1],[2.76,.2]]){
+function bellNote(frequency,when,duration,volume=.2){
+ if(!soundEnabled||audioContext?.state!=='running')return;
+ const time=Math.max(audioContext.currentTime+.008,when);
+ for(const [ratio,level] of [[1,1],[2.76,.24],[5.4,.065]]){
   const voice=audioContext.createOscillator(),gain=audioContext.createGain();voice.type='sine';voice.frequency.setValueAtTime(frequency*ratio,time);
-  gain.gain.setValueAtTime(.0001,time);gain.gain.linearRampToValueAtTime(volume*level,time+.008);gain.gain.exponentialRampToValueAtTime(.0001,time+duration);
+  gain.gain.setValueAtTime(.0001,time);gain.gain.linearRampToValueAtTime(volume*level,time+.007);gain.gain.exponentialRampToValueAtTime(.0001,time+duration);
   voice.connect(gain);gain.connect(audioMaster);audioVoices.add(voice);
-  voice.onended=()=>{audioVoices.delete(voice);voice.disconnect();gain.disconnect();};voice.start(time);voice.stop(time+duration+.02);
+  voice.onended=()=>{audioVoices.delete(voice);voice.disconnect();gain.disconnect();};voice.start(time);voice.stop(time+duration+.03);
  }
 }
-function playSparkle(){
- if(!soundEnabled||!audioContext||audioContext.state!=='running')return;
+async function playSparkle(){
+ const run=soundRun;
+ if(!await unlockAudio()||run!==soundRun)return;
  const now=audioContext.currentTime;
- [1046.5,1318.5,1568,2093].forEach((note,index)=>bellNote(note,now+index*.075,.36,.13));
- console.info('Christmas chime: 4 notes scheduled.');
+ [1568,2093,2637].forEach((note,index)=>bellNote(note,now+index*.085,.85,.2));
+ soundHint.textContent='조명에 닿을 때마다 뾰로롱! 같은 조명에도 다시 닿아 보세요.';
 }
-function playJingleBells(){
- if(carolStarted||!soundEnabled||!audioContext||audioContext.state!=='running')return;
+async function playJingleBells(){
+ const run=soundRun;
+ if(!await unlockAudio()||run!==soundRun||carolStarted||!completed||!stream)return;
  carolStarted=true;
  const E=76,G=79,C=72,D=74,F=77;
  const opening=[[E,1],[E,1],[E,2],[E,1],[E,1],[E,2],[E,1],[G,1],[C,1.5],[D,.5],[E,4]];
  const score=[...opening,[F,1],[F,1],[F,1.5],[F,.5],[F,1],[E,1],[E,1],[E,.5],[E,.5],[E,1],[D,1],[D,1],[E,1],[D,2],[G,2],...opening,[F,1],[F,1],[F,1.5],[F,.5],[F,1],[E,1],[E,1],[E,.5],[E,.5],[G,1],[G,1],[F,1],[D,1],[C,4]];
- let when=audioContext.currentTime+.45;const beat=60/164;
- for(const [note,beats] of score){bellNote(440*Math.pow(2,(note-69)/12),when,Math.min(beats*beat*.9,1.1),.17);when+=beats*beat;}
- console.info('Christmas Jingle Bells: '+score.length+' notes scheduled.');
+ const beat=60/156,begin=audioContext.currentTime+.3;
+ let when=begin,totalBeats=0;
+ for(const [note,beats] of score){bellNote(440*Math.pow(2,(note-69)/12),when,Math.max(.24,Math.min(beats*beat*.95,1.35)),.22);when+=beats*beat;totalBeats+=beats;}
+ const chords=[[48,52,55],[48,52,55],[53,57,60],[55,59,62]];
+ for(let bar=0;bar*4<totalBeats;bar++){
+  const chord=chords[bar%chords.length],at=begin+bar*4*beat;
+  for(const note of chord)bellNote(440*Math.pow(2,(note-69)/12),at,beat*3.5,.035);
+  for(const off of [0,2])bellNote(440*Math.pow(2,(chord[0]-12-69)/12),at+off*beat,beat*1.5,.08);
+ }
+ soundHint.textContent='큰 별이 켜졌어요! 종소리와 반주로 징글벨을 연주하고 있어요.';
 }
-soundToggle.addEventListener('click',()=>{
- soundEnabled=!soundEnabled;
- if(soundEnabled){unlockAudio();if(completed&&stream)playJingleBells();}
- else {if(audioMaster)audioMaster.gain.value=0;stopSounds();}
- soundToggle.setAttribute('aria-pressed',String(soundEnabled));soundToggle.textContent=soundEnabled?'소리 켜짐 · 누르면 끄기':'소리 꺼짐 · 누르면 켜기';
+soundToggle.addEventListener('click',async()=>{
+ if(soundEnabled&&audioContext?.state==='running'){
+  soundEnabled=false;audioMaster.gain.setValueAtTime(0,audioContext.currentTime);stopSounds();updateSoundState();soundHint.textContent='소리를 껐어요.';return;
+ }
+ soundEnabled=true;
+ if(await unlockAudio()){if(completed&&stream)void playJingleBells();else void playSparkle();}
 });
+soundPreview.addEventListener('click',async()=>{
+ soundEnabled=true;
+ if(await unlockAudio())void playSparkle();
+});
+updateSoundState();
 const lightPercent=document.getElementById('lightPercent'),lightProgress=document.getElementById('lightProgress'),lightCount=document.getElementById('lightCount'),fullReveal=document.getElementById('fullReveal'),topperGlow=document.getElementById('topperGlow'),celebration=document.getElementById('celebration');
 const lampPositions=[[579, 266], [530, 286], [620, 290], [654, 375], [528, 393], [594, 408], [444, 453], [512, 460], [588, 447], [650, 444], [484, 418], [692, 515], [741, 520], [425, 545], [477, 561], [571, 582], [620, 570], [795, 578], [825, 603], [469, 613], [400, 696], [442, 678], [507, 659], [354, 712], [328, 740], [597, 747], [737, 730], [857, 754], [892, 751], [364, 815], [392, 826], [507, 824], [573, 888], [765, 889], [814, 903], [319, 880], [914, 908], [293, 1007], [478, 1074], [650, 1119]];
 const initiallyLit=new Set([0, 3, 5, 8, 11, 14, 16, 19, 22, 25, 27, 30, 33, 35, 37, 39]);
 const lamps=lampPositions.map(([x,y],index)=>({x,y,lit:initiallyLit.has(index),reveal:document.getElementById('reveal-'+index),glow:document.getElementById('glow-'+index)}));
 const completionThreshold=Math.ceil(lamps.length*.8);
-let completed=false,pointerInside=false,nextLightTime=0;
+let completed=false,pointerInside=false,nextLightTime=0,lastTouchedLamp=null;
 function updateLightCount(){
  const count=lamps.filter(lamp=>lamp.lit).length;
  lightPercent.textContent=Math.round(count/lamps.length*100)+'%';lightProgress.value=count;lightCount.textContent=count+' / '+lamps.length+'개 점등';
@@ -273,28 +347,31 @@ function completeTree(){
  sceneNote.textContent='당신의 빛으로 트리가 완성됐어요.';status.textContent='축하해요! 꼭대기 큰 별과 모든 장식이 가장 밝게 켜졌어요.';updateLightCount();
 }
 function resetLights(){
- completed=false;pointerInside=false;nextLightTime=0;clearParticles();stopSounds();fullReveal.style.opacity='0';topperGlow.style.opacity='0';scene.classList.remove('complete');celebration.hidden=true;
+ completed=false;pointerInside=false;lastTouchedLamp=null;nextLightTime=0;clearParticles();stopSounds();fullReveal.style.opacity='0';topperGlow.style.opacity='0';scene.classList.remove('complete');celebration.hidden=true;
  lamps.forEach((lamp,index)=>{lamp.lit=initiallyLit.has(index);lamp.reveal.style.opacity=lamp.lit?'1':'0';lamp.glow.style.opacity=lamp.lit?'1':'0';});
  sceneNote.textContent=stream?'요정을 잠든 장식 가까이 움직여 주세요.':'웹캠을 켜고, 잠든 장식에 빛을 선물해 주세요.';
  if(stream)status.textContent='다시 시작해요. 요정이 장식에 가까이 가면 불빛이 하나씩 켜져요.';
  updateLightCount();
 }
 function lightNearby(now){
- if(!backgroundsReady||completed||!pointerInside||now<nextLightTime)return;
+ if(!backgroundsReady||!pointerInside)return;
  const scale=Math.min(scene.clientWidth/1199,scene.clientHeight/1312),offsetX=(scene.clientWidth-1199*scale)/2,offsetY=(scene.clientHeight-1312*scale)/2;
  const reach=Math.max(30,65*scale);
  let nearest=null,nearestDistance=reach;
  for(const lamp of lamps){
-  if(lamp.lit)continue;
   const distance=Math.hypot(pointerX-(offsetX+lamp.x*scale),pointerY-(offsetY+lamp.y*scale));
   if(distance<nearestDistance){nearest=lamp;nearestDistance=distance;}
  }
- if(!nearest)return;
- lightLamp(nearest);boostUntil=now+PARTICLE_BOOST_MS;playSparkle();nextLightTime=now+140;updateLightCount();
+ if(nearest!==lastTouchedLamp){
+  lastTouchedLamp=nearest;
+  if(nearest)void playSparkle();
+ }
+ if(!nearest||completed||nearest.lit||now<nextLightTime)return;
+ lightLamp(nearest);boostUntil=now+PARTICLE_BOOST_MS;nextLightTime=now+140;updateLightCount();
  if(lamps.filter(lamp=>lamp.lit).length>=completionThreshold)completeTree();
 }
 document.getElementById('resetLights').addEventListener('click',resetLights);
-scene.addEventListener('pointerleave',()=>{pointerInside=false;});
+scene.addEventListener('pointerleave',()=>{pointerInside=false;lastTouchedLamp=null;});
 
 function moveFairy(now){
  const marginX=Math.min(fairy.offsetWidth/2+6,scene.clientWidth/2),marginY=Math.min(fairy.offsetHeight/2+6,scene.clientHeight/2);
@@ -305,6 +382,7 @@ function moveFairy(now){
  const ease=reducedMotion?1:1-Math.exp(-12*elapsed);
  fairyX+=(targetX-fairyX)*ease;fairyY+=(targetY-fairyY)*ease;
  fairy.style.left=fairyX+'px';fairy.style.top=fairyY+'px';
+ fairy.style.setProperty('--fairy-lean',reducedMotion?'0deg':Math.max(-11,Math.min(11,(targetX-fairyX)*.12))+'deg');
 }
 function resetFairy(){
  fairyX=targetX=scene.clientWidth*.26;fairyY=targetY=scene.clientHeight*.45;lastMoveTime=null;
@@ -364,7 +442,8 @@ function turnOff(message='웹캠을 껐어요. 다시 켜서 확인할 수 있�
  requestId++;detectedFace=null;lastFaceSeen=-Infinity;lastFaceVideoTime=-1;faceTracking.textContent='웹캠을 켜면 얼굴을 자동으로 맞춰요.';
  cancelAnimationFrame(faceFrame);faceFrame=0;lastMoveTime=null;clearParticles();stopSounds();
  if(audioContext&&audioContext.state==='running')void audioContext.suspend().catch(()=>{});faceContext.clearRect(0,0,face.width,face.height);
- fairy.hidden=true;faceControls.hidden=true;pointerInside=false;sceneNote.textContent=completed?'당신의 빛으로 트리가 완성됐어요.':'웹캠을 켜고, 잠든 장식에 빛을 선물해 주세요.';
+ soundHint.textContent='종소리 확인을 누르면 카메라 없이도 소리를 들어볼 수 있어요.';
+ fairy.hidden=true;faceControls.hidden=true;pointerInside=false;lastTouchedLamp=null;sceneNote.textContent=completed?'당신의 빛으로 트리가 완성됐어요.':'웹캠을 켜고, 잠든 장식에 빛을 선물해 주세요.';
  if(stream)stream.getTracks().forEach(track=>track.stop());
  stream=null;video.srcObject=null;video.hidden=true;placeholder.hidden=false;
  start.disabled=!backgroundsReady;stop.disabled=true;badge.textContent='카메라 꺼짐';status.textContent=message;
@@ -374,7 +453,7 @@ start.addEventListener('click',async()=>{
  const id=++requestId;let incoming=null;
  start.disabled=true;stop.disabled=false;status.textContent='카메라 사용을 허용해 주세요. 기다리는 동안 끄기를 눌러 취소할 수 있어요.';
  try{
-  try{unlockAudio();}catch(audioError){soundEnabled=false;soundToggle.textContent='소리 꺼짐 · 누르면 켜기';soundToggle.setAttribute('aria-pressed','false');console.warn('Audio could not start:',audioError.name);}
+  if(soundEnabled&&await unlockAudio())void playSparkle();
   if(!navigator.mediaDevices?.getUserMedia)throw new Error('LOCAL_ADDRESS');
   incoming=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false});
   if(id!==requestId){incoming.getTracks().forEach(track=>track.stop());return;}
