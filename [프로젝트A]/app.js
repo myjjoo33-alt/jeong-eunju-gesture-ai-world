@@ -105,7 +105,9 @@ function render() {
           lastHandTime = now;
           const hands = gestureRecognizer.recognizeForVideo(video, now);
           const gesture = handGesture.update(hands.landmarks, now, hands.gestures.map(list => list[0]?.score >= (list[0]?.categoryName === 'Closed_Fist' ? 0.35 : 0.55) ? list[0].categoryName : 'None'));
-          if (gesture.action === 'grow') {
+          if (gesture.action === 'reset') {
+            density = 0; redBoxes.reset(now); mosaic.setDensity(0);
+          } else if (gesture.action === 'grow') {
             density = Math.min(6,density+1); redBoxes.add(now); mosaic.setDensity(density);
           } else if (gesture.action === 'shrink') {
             density = Math.max(-2,density-1); redBoxes.remove(now); mosaic.setDensity(density);
@@ -130,7 +132,7 @@ function render() {
         mosaic.draw(parts.map(part => part.canvas), selection.others.length ? otherParts.map(part => part.canvas) : [], accents);
         status.dataset.redBoxes = String(accents.length);
         if (hideOnFirstFace) { showControls(false); hideOnFirstFace = false; }
-        setStatus(result.faceLandmarks.length + '명 인식 중 · 손 펴기: 증식 · 주먹: 감소', 'tracking');
+        setStatus(result.faceLandmarks.length + '명 인식 중 · 손 펴기: 증식 · 주먹: 감소 · 엄지 아래 2초: 초기화', 'tracking');
       } else {
 
         setStatus('얼굴을 찾는 중입니다. 밝은 곳에서 카메라를 정면으로 바라보세요.', 'searching');

@@ -14,10 +14,10 @@ export function createHandGesture() {
       }).length;
       const label=categories?.[index];
       const fallback=(!label||label==='None')&&folded>=3&&extended<=1&&distance(p[4],p[5])<size*1.25;
-      return {folded,fist:size>=.02&&(label==='Closed_Fist'||fallback),open:size>=.025&&(label==='Open_Palm'||extended>=3)};
+      return {folded,down:size>=.02&&label==='Thumb_Down',fist:size>=.02&&(label==='Closed_Fist'||fallback),open:size>=.025&&(label==='Open_Palm'||extended>=3)};
     });
     const fist=shapes.some(h=>h.fist),open=shapes.some(h=>h.open);
-    const current=fist?'fist':open?'open':null;
+    const current=shapes.some(h=>h.down)?'reset':fist?'fist':open?'open':null;
     const report=(message,action)=>({message,action,trigger:!!action,fistCandidate:fist,folded:Math.max(0,...shapes.map(h=>h.folded)),pose:current});
     if(!hands.length) {
       absentSince??=now;
@@ -30,6 +30,13 @@ export function createHandGesture() {
     lastSeen=now;
     if(locked)return report('손을 잠깐 화면 밖으로 뺐다가 다시 보여 주세요');
     if(current!==candidate){candidate=current;since=now;}
+    if(current==='reset') {
+      if(pose==='reset')return report('초기화 완료 · 손을 펴서 다시 시작하세요');
+      const remaining=2000-(now-since);
+      if(remaining>0)return report('처음으로 돌아가기까지 '+Math.ceil(remaining/1000)+'초 · 엄지를 아래로 유지하세요');
+      pose='reset';
+      return report('처음 상태로 돌아왔습니다','reset');
+    }
     if(now-since>=220&&pose!==current) {
       pose=current;
       return report(current==='open'?'손 펴기 감지 · 조각이 늘어났습니다':'주먹 감지 · 조각이 줄어들었습니다',current==='open'?'grow':'shrink');

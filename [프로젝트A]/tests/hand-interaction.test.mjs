@@ -37,3 +37,22 @@ test('random removal reaches zero and another opening can restore a red box',()=
 test('four-second refresh preserves unique parts among four red boxes',()=>{
  const r=createRedBox();r.add(0);r.add(0);r.add(0);const p=r.get(1).map(b=>b.part);assert.deepEqual(r.get(3999).map(b=>b.part),p);assert.equal(new Set(r.get(4000).map(b=>b.part)).size,4);
 });
+test('thumb down counts two seconds, resets once, then allows opening again',()=>{
+ const h=createHandGesture();const down=()=>h.update([fist()],0,['Thumb_Down']);
+ assert.equal(down().action,undefined);
+ assert.match(h.update([fist()],1000,['Thumb_Down']).message,/1초/);
+ assert.equal(h.update([fist()],1999,['Thumb_Down']).action,undefined);
+ assert.equal(h.update([fist()],2000,['Thumb_Down']).action,'reset');
+ assert.equal(h.update([fist()],5000,['Thumb_Down']).trigger,false);
+ h.update([open()],5100,['Open_Palm']);assert.equal(h.update([open()],5350,['Open_Palm']).action,'grow');
+});
+test('releasing thumb down cancels reset; long detection gap restarts countdown',()=>{
+ const h=createHandGesture();h.update([fist()],0,['Thumb_Down']);h.update([],1000);
+ h.update([fist()],1500,['Thumb_Down']);assert.equal(h.update([fist()],3000,['Thumb_Down']).action,undefined);
+ assert.equal(h.update([fist()],3500,['Thumb_Down']).action,'reset');
+});
+test('thumb down takes priority over fist and open hand during countdown',()=>{
+ const h=createHandGesture();h.update([open(),fist()],0,['Open_Palm','Thumb_Down']);
+ assert.equal(h.update([open(),fist()],500,['Open_Palm','Thumb_Down']).trigger,false);
+ assert.equal(h.update([fist(),fist()],2000,['Closed_Fist','Thumb_Down']).action,'reset');
+});
