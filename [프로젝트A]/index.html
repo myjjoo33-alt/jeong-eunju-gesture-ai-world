@@ -8,7 +8,7 @@
   <title>프로젝트A · 얼굴의 조각</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23111713'/%3E%3Cpath d='M14 14h16v16H14zm20 0h16v16H34zM14 34h16v16H14zm20 0h16v16H34z' fill='%23c3db97'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.js"></script>
+  <script defer src="./bootstrap.js"></script>
 </head>
 <body>
   <main class="page">
@@ -34,7 +34,7 @@
 
     <div class="statusbar">
       <p id="status" role="status" aria-live="polite" data-state="loading">얼굴 인식 준비 중입니다…</p>
-      <span class="step">01 <span>/</span> 네 부위 분리하기</span>
+      <a id="open-project-link" hidden href="https://myjjoo33-alt.github.io/jeong-eunju-gesture-ai-world/%5B%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8A%5D/" style="color: #c3db97; font-size: 13px;">배포된 화면 열기 ↗</a><span class="step">01 <span>/</span> 네 부위 분리하기</span>
     </div>
 
     <section class="workspace" aria-label="실시간 얼굴 영상과 네 개의 조각">
