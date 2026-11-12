@@ -16,7 +16,7 @@ export function createMosaic(canvas) {
     cells.push({ x, y, size, part, accent });
     for (let row = y; row < y + size; row++) for (let col = x; col < x + size; col++) occupied[row][col] = true;
   }
-  add(8, 2, 8, 0, true);
+
   const sequence = [0, 1, 0, 1, 2, 3];
   let index = 0;
   for (let y = 0; y < rows; y++) {
@@ -32,7 +32,7 @@ export function createMosaic(canvas) {
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
   }
   function clear() { resize(); context.fillStyle = '#070707'; context.fillRect(0, 0, canvas.width, canvas.height); }
-  function draw(primaryParts, surroundingParts, accentPart) {
+  function draw(primaryParts, surroundingParts, accents) {
     const sources = [...primaryParts, ...surroundingParts];
     const backgroundOffset = surroundingParts.length ? primaryParts.length : 0;
     resize();
@@ -40,16 +40,11 @@ export function createMosaic(canvas) {
       tiles[i].context.filter = 'grayscale(1) contrast(1.7)';
       tiles[i].context.drawImage(sources[i], 0, 0);
     }
-    redContext.globalCompositeOperation = 'source-over';
-    redContext.drawImage(tiles[accentPart].canvas, 0, 0);
-    redContext.globalCompositeOperation = 'multiply';
-    redContext.fillStyle = '#ff1018';
-    redContext.fillRect(0, 0, 420, 420);
     for (const cell of cells) {
       const x = Math.round(cell.x * canvas.width / columns), y = Math.round(cell.y * canvas.height / rows);
       const width = Math.round((cell.x + cell.size) * canvas.width / columns) - x;
       const height = Math.round((cell.y + cell.size) * canvas.height / rows) - y;
-      const source = cell.accent ? red : tiles[backgroundOffset + cell.part].canvas;
+      const source = tiles[backgroundOffset + cell.part].canvas;
       // Cover each rectangle without stretching the face or leaving gaps.
       const sw = width > height ? 420 : 420 * width / height;
       const sh = height > width ? 420 : 420 * height / width;
@@ -58,6 +53,18 @@ export function createMosaic(canvas) {
       else context.translate(x, y);
       context.drawImage(source, (420 - sw) / 2, (420 - sh) / 2, sw, sh, 0, 0, width, height);
       context.restore();
+    }
+    for (const box of accents) {
+      redContext.globalCompositeOperation = 'source-over';
+      redContext.drawImage(tiles[box.part].canvas, 0, 0);
+      redContext.globalCompositeOperation = 'multiply';
+      redContext.fillStyle = '#ff1018';
+      redContext.fillRect(0, 0, 420, 420);
+      const x = box.x * canvas.width / columns, y = box.y * canvas.height / rows;
+      const width = box.size * canvas.width / columns, height = box.size * canvas.height / rows;
+      const sw = width > height ? 420 : 420 * width / height;
+      const sh = height > width ? 420 : 420 * height / width;
+      context.drawImage(red, (420 - sw) / 2, (420 - sh) / 2, sw, sh, x, y, width, height);
     }
   }
   clear();

@@ -1,3 +1,4 @@
+import { createHeadTurn, createRedBoxes } from './head-interaction.js';
 import { createFaceSelector } from './face-selection.js';
 import { createMosaic } from './mosaic.js';
 import { FaceLandmarker, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
@@ -24,7 +25,8 @@ const otherParts = parts.map(part => {
   canvas.width = canvas.height = 420;
   return { ...part, canvas, context: canvas.getContext('2d'), card: null };
 });
-let accentPart = -1, nextAccentAt = 0;
+const headTurn = createHeadTurn();
+const redBoxes = createRedBoxes();
 const controls = document.querySelector('#controls');
 const controlsToggle = document.querySelector('#controls-toggle');
 function showControls(show) {
@@ -101,15 +103,20 @@ function render() {
         if (selection.others.length) {
           for (const part of otherParts) drawPart(selection.others[0].landmarks, part);
         }
-        if (selection.changed || now >= nextAccentAt) {
-          const choices = [0, 1, 2, 3].filter(index => index !== accentPart);
-          accentPart = choices[Math.floor(Math.random() * choices.length)];
-          nextAccentAt = now + 4000;
+        if (selection.changed) {
+          headTurn.reset();
+          redBoxes.reset(now);
         }
-        mosaic.draw(parts.map(part => part.canvas), selection.others.length ? otherParts.map(part => part.canvas) : [], accentPart);
+        if (headTurn.update(landmarks, now)) redBoxes.add(now);
+        const accents = redBoxes.get(now);
+        mosaic.draw(parts.map(part => part.canvas), selection.others.length ? otherParts.map(part => part.canvas) : [], accents);
+        status.dataset.redBoxes = String(accents.length);
         if (hideOnFirstFace) { showControls(false); hideOnFirstFace = false; }
-        setStatus(result.faceLandmarks.length === 1 ? '1명 인식 중 · 본인의 조각으로 전체 화면을 채웁니다.' : '2명 인식 중 · 큰 얼굴은 빨간 박스, 다른 얼굴은 주변 박스에 표시합니다.', 'tracking');
+        setStatus(result.faceLandmarks.length + '명 인식 중 · 빨간 박스 ' + accents.length + '개 · 정면을 본 뒤 고개를 좌우로 돌려 보세요.', 'tracking');
       } else {
+        headTurn.reset();
+        redBoxes.reset(now);
+        status.dataset.redBoxes = '1';
         setStatus('얼굴을 찾는 중입니다. 밝은 곳에서 카메라를 정면으로 바라보세요.', 'searching');
       }
     }
@@ -123,7 +130,9 @@ function render() {
 
 function stopCamera() {
   selector.reset();
-  nextAccentAt = 0;
+  headTurn.reset();
+  redBoxes.reset();
+  status.dataset.redBoxes = '1';
   showControls(true);
   session += 1;
   cancelAnimationFrame(animationId);
