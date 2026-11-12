@@ -79,3 +79,4 @@ h1 { font-size: 34px; }
 #hand-status { position: fixed; left: 14px; bottom: 14px; z-index: 3; max-width: calc(100vw - 28px); margin: 0; padding: 9px 12px; border-radius: 4px; background: #000c; color: #fff; font-size: 13px; line-height: 1.5; pointer-events: none; }
 .actions { flex-wrap: wrap; }
 #music-button { position: fixed; top: 58px; right: 14px; z-index: 3; min-height: 36px; padding: 8px 12px; background: #111c; border: 1px solid #fff5; color: white; font-size: 12px; }
+#end-button { position: fixed; top: 102px; right: 14px; z-index: 3; min-height: 36px; padding: 8px 12px; background: #3b1616e8; border: 1px solid #edaaaa80; color: white; font-size: 12px; }

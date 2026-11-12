@@ -1,6 +1,7 @@
 export function setupMusic(audio, button) {
   let enabled=true, request=0;
   audio.volume=.25;
+  audio.loop=true;
   function update() {
     const playing=!audio.paused;
     button.textContent=playing?'음악 끄기':'음악 켜기';
@@ -27,5 +28,6 @@ export function setupMusic(audio, button) {
   audio.addEventListener('play',update);
   audio.addEventListener('pause',update);
   update();
-  return {start,pause};
+  function stop() { pause(); try { audio.currentTime=0; } catch {} }
+  return {start,pause,stop};
 }

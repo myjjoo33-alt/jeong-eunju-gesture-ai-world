@@ -160,7 +160,6 @@ function render() {
 }
 
 function stopCamera() {
-  music.pause();
   selector.reset();
   resetDensity();
   lastHandTime = -Infinity;
@@ -243,9 +242,13 @@ document.addEventListener('fullscreenchange', () => {
     ? '전체 화면 나가기 <span aria-hidden="true">↙</span>'
     : '전체 화면 <span aria-hidden="true">↗</span>';
 });
-window.addEventListener('pagehide', stopCamera);
+window.addEventListener('pagehide', () => { music.stop(); stopCamera(); });
+document.querySelector('#end-button').addEventListener('click', () => {
+  music.stop(); stopCamera();
+  setStatus('종료했습니다. 카메라 켜기를 누르면 다시 시작합니다.');
+});
 document.addEventListener('visibilitychange', () => {
-  if(document.hidden)music.pause();
+
   if (document.hidden && (stream || cameraButton.disabled && landmarker)) stopCamera();
 });
 
