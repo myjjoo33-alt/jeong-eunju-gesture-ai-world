@@ -1,3 +1,4 @@
+import { setupMusic } from './music.js';
 import { createHandGesture } from './hand-interaction.js';
 import { createRedBox } from './red-box.js';
 import { createFaceSelector } from './face-selection.js';
@@ -5,6 +6,7 @@ import { createMosaic } from './mosaic.js';
 import { FaceLandmarker, GestureRecognizer, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
 
 const video = document.querySelector('#webcam');
+const music = setupMusic(document.querySelector('#background-music'), document.querySelector('#music-button'));
 const overlay = document.querySelector('#overlay');
 const overlayContext = overlay.getContext('2d');
 const cameraButton = document.querySelector('#camera-button');
@@ -158,6 +160,7 @@ function render() {
 }
 
 function stopCamera() {
+  music.pause();
   selector.reset();
   resetDensity();
   lastHandTime = -Infinity;
@@ -223,7 +226,10 @@ async function startCamera() {
   }
 }
 
-cameraButton.addEventListener('click', () => stream ? stopCamera() : startCamera());
+cameraButton.addEventListener('click', () => {
+  if(stream)stopCamera();
+  else { music.start(); startCamera(); }
+});
 document.querySelector('#fullscreen-button').addEventListener('click', async () => {
   try {
     if (document.fullscreenElement) await document.exitFullscreen();
@@ -239,6 +245,7 @@ document.addEventListener('fullscreenchange', () => {
 });
 window.addEventListener('pagehide', stopCamera);
 document.addEventListener('visibilitychange', () => {
+  if(document.hidden)music.pause();
   if (document.hidden && (stream || cameraButton.disabled && landmarker)) stopCamera();
 });
 

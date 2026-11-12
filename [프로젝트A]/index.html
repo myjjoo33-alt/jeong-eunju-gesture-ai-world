@@ -10,11 +10,11 @@
   <link rel="stylesheet" href="./style.css">
   <script defer src="./bootstrap.js"></script>
 </head>
-<body>
+<body><audio id="background-music" src="./audio/mondamusic-no-copyright-music-597183.mp3" loop preload="metadata"></audio><button id="music-button" type="button" aria-pressed="false" title="배경음악을 켜거나 끕니다">음악 켜기</button>
   <p id="hand-status" role="status" aria-live="polite">손 인식 준비 중…</p><canvas id="mosaic" aria-label="눈·코·입의 실시간 흑백 모자이크"></canvas><button id="controls-toggle" type="button" aria-expanded="true" aria-controls="controls">안내 숨기기</button><main id="controls" class="page">
     <header class="topbar">
       <a class="wordmark" href="./" aria-label="프로젝트A 처음으로">PROJECT <span>A</span></a>
-      <span class="edition">얼굴의 조각 <span class="divider">/</span> V2 · 주먹 유지 감소</span>
+      <span class="edition">얼굴의 조각 <span class="divider">/</span> V2 · 배경음악 추가</span>
     </header>
 
     <section class="intro" aria-labelledby="title">
@@ -28,7 +28,7 @@
           <button id="camera-button" type="button" disabled>준비 중…</button>
           <button id="reset-fragments" class="secondary" type="button">조각 초기화</button><button id="fullscreen-button" class="secondary" type="button">전체 화면 <span aria-hidden="true">↗</span></button>
         </div>
-        <p class="privacy">영상은 이 기기 안에서만 처리됩니다. 녹화·업로드하지 않습니다.</p>
+        <p class="privacy">카메라를 켜면 배경음악이 함께 재생됩니다.<br>영상은 이 기기 안에서만 처리됩니다. 녹화·업로드하지 않습니다.</p>
       </div>
     </section>
 
