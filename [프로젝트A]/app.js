@@ -39,8 +39,9 @@ controlsToggle.addEventListener('click', () => showControls(controls.hidden));
 let hideOnFirstFace = false;
 let landmarker, gestureRecognizer;
 let density = 0, lastHandTime = -Infinity;
+let actionNotice = '', actionNoticeUntil = 0;
 const handStatus = document.querySelector('#hand-status');
-function resetDensity(waitForRelease = false) { redBoxes.reset(performance.now()); density = 0; mosaic.setDensity(0); handGesture.reset(waitForRelease); handStatus.textContent = '손을 화면에 보여 주세요'; }
+function resetDensity(waitForRelease = false) { actionNotice = ''; actionNoticeUntil = 0; redBoxes.reset(performance.now()); density = 0; mosaic.setDensity(0); handGesture.reset(waitForRelease); handStatus.textContent = '손을 화면에 보여 주세요'; }
 document.querySelector('#reset-fragments').addEventListener('click', () => resetDensity(true));
 let stream;
 let animationId;
@@ -105,6 +106,7 @@ function render() {
           lastHandTime = now;
           const hands = gestureRecognizer.recognizeForVideo(video, now);
           const gesture = handGesture.update(hands.landmarks, now, hands.gestures.map(list => list[0]?.score >= (list[0]?.categoryName === 'Closed_Fist' ? 0.35 : 0.55) ? list[0].categoryName : 'None'));
+          const beforeNormal = mosaic.getTileCount(), beforeRed = redBoxes.get(now).length;
           if (gesture.action === 'reset') {
             density = 0; redBoxes.reset(now); mosaic.setDensity(0);
           } else if (gesture.action === 'grow') {
@@ -112,9 +114,18 @@ function render() {
           } else if (gesture.action === 'shrink') {
             density = Math.max(-2,density-1); redBoxes.remove(now); mosaic.setDensity(density);
           }
+          if (gesture.action) {
+            const afterNormal = mosaic.getTileCount(), afterRed = redBoxes.get(now).length;
+            const changed = beforeNormal !== afterNormal || beforeRed !== afterRed;
+            if (!changed && gesture.action === 'shrink') gesture.message = '주먹 인식됨 · 더 줄일 박스가 없습니다';
+            actionNotice = gesture.action === 'reset' ? '초기화 완료' : !changed && gesture.action === 'shrink'
+              ? '이미 최소 개수입니다 · 손을 펴면 다시 늘어납니다'
+              : (gesture.action === 'shrink' ? '감소 적용' : '증가 적용') + ' · 일반 ' + beforeNormal + '→' + afterNormal + '개 · 빨간 ' + beforeRed + '→' + afterRed + '개';
+            actionNoticeUntil = now + 3000;
+          }
           const modelResult=hands.gestures[0]?.[0];
           const fistScore=modelResult?.categoryName==='Closed_Fist' ? Math.round(modelResult.score*100)+'%' : '미확정';
-          handStatus.textContent = '손 ' + hands.landmarks.length + '개 · 주먹 ' + (gesture.fistCandidate ? '모양 확인' : fistScore) + ' · ' + gesture.message + ' · 일반 ' + mosaic.getTileCount() + '개 · 빨간 ' + redBoxes.get(now).length + '개' + (landmarks ? '' : ' · 얼굴도 카메라에 보여 주세요');
+          handStatus.textContent = 'V2 감소 보완 · ' + (now < actionNoticeUntil && gesture.pose !== 'reset' ? actionNotice + ' ｜ ' : '') + '손 ' + hands.landmarks.length + '개 · 주먹 ' + (gesture.fistCandidate ? '모양 확인' : fistScore) + ' · ' + gesture.message + ' · 일반 ' + mosaic.getTileCount() + '개 · 빨간 ' + redBoxes.get(now).length + '개' + (landmarks ? '' : ' · 얼굴도 카메라에 보여 주세요');
           handStatus.dataset.hands = String(hands.landmarks.length);
           handStatus.dataset.level = String(density);
           handStatus.dataset.fist = String(gesture.fistCandidate);
@@ -132,7 +143,7 @@ function render() {
         mosaic.draw(parts.map(part => part.canvas), selection.others.length ? otherParts.map(part => part.canvas) : [], accents);
         status.dataset.redBoxes = String(accents.length);
         if (hideOnFirstFace) { showControls(false); hideOnFirstFace = false; }
-        setStatus(result.faceLandmarks.length + '명 인식 중 · 손 펴기: 증식 · 주먹: 감소 · 엄지 아래 2초: 초기화', 'tracking');
+        setStatus(result.faceLandmarks.length + '명 인식 중 · 손 펴기: 증식 · 주먹 유지: 1초마다 감소 · 엄지 아래 2초: 초기화', 'tracking');
       } else {
 
         setStatus('얼굴을 찾는 중입니다. 밝은 곳에서 카메라를 정면으로 바라보세요.', 'searching');

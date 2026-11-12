@@ -56,3 +56,20 @@ test('thumb down takes priority over fist and open hand during countdown',()=>{
  assert.equal(h.update([open(),fist()],500,['Open_Palm','Thumb_Down']).trigger,false);
  assert.equal(h.update([fist(),fist()],2000,['Closed_Fist','Thumb_Down']).action,'reset');
 });
+test('held fist continues shrinking once per second, not on every frame',()=>{
+ const h=createHandGesture();h.update([fist()],0,['Closed_Fist']);
+ assert.equal(h.update([fist()],250,['Closed_Fist']).action,'shrink');
+ assert.equal(h.update([fist()],1249,['Closed_Fist']).trigger,false);
+ assert.equal(h.update([fist()],1250,['Closed_Fist']).action,'shrink');
+ assert.equal(h.update([fist()],1300,['Closed_Fist']).trigger,false);
+ assert.equal(h.update([fist()],2250,['Closed_Fist']).action,'shrink');
+ h.update([open()],2300,['Open_Palm']);
+ assert.equal(h.update([open()],2550,['Open_Palm']).action,'grow');
+ assert.equal(h.update([open()],5000,['Open_Palm']).trigger,false);
+});
+test('thumb-down countdown suppresses repeating fist from another hand',()=>{
+ const h=createHandGesture();h.update([fist()],0,['Closed_Fist']);h.update([fist()],250,['Closed_Fist']);
+ h.update([fist(),fist()],500,['Closed_Fist','Thumb_Down']);
+ assert.equal(h.update([fist(),fist()],1500,['Closed_Fist','Thumb_Down']).trigger,false);
+ assert.equal(h.update([fist(),fist()],2500,['Closed_Fist','Thumb_Down']).action,'reset');
+});

@@ -1,6 +1,6 @@
 export function createHandGesture() {
-  let pose=null,candidate=null,since=0,lastSeen=-Infinity,absentSince=null,locked=false;
-  function reset(waitForRelease=false) { pose=candidate=null;since=0;lastSeen=-Infinity;absentSince=null;locked=waitForRelease; }
+  let pose=null,candidate=null,since=0,lastSeen=-Infinity,absentSince=null,locked=false,lastShrinkAt=-Infinity;
+  function reset(waitForRelease=false) { pose=candidate=null;since=0;lastSeen=-Infinity;absentSince=null;locked=waitForRelease;lastShrinkAt=-Infinity; }
   function update(hands,now,categories) {
     const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
     const shapes=hands.map((p,index)=>{
@@ -39,9 +39,14 @@ export function createHandGesture() {
     }
     if(now-since>=220&&pose!==current) {
       pose=current;
+      if(current==='fist')lastShrinkAt=now;
       return report(current==='open'?'손 펴기 감지 · 조각이 늘어났습니다':'주먹 감지 · 조각이 줄어들었습니다',current==='open'?'grow':'shrink');
     }
-    if(pose===current)return report(current==='open'?'손바닥 인식됨 · 주먹을 쥐면 줄어듭니다':'주먹 인식됨 · 손을 펴면 늘어납니다');
+    if(pose===current&&current==='fist'&&now-lastShrinkAt>=1000) {
+      lastShrinkAt=now;
+      return report('주먹 유지 · 조각을 한 번 더 줄였습니다','shrink');
+    }
+    if(pose===current)return report(current==='open'?'손바닥 인식됨 · 주먹을 쥐면 줄어듭니다':'주먹 인식됨 · 유지하면 1초마다 줄어듭니다');
     return report(current==='open'?'손바닥 확인 중 · 잠깐 유지해 주세요':'주먹 확인 중 · 잠깐 유지해 주세요');
   }
   return {update,reset};
