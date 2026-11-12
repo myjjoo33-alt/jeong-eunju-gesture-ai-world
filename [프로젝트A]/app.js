@@ -1,0 +1,196 @@
+import { FaceLandmarker, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
+
+const video = document.querySelector('#webcam');
+const overlay = document.querySelector('#overlay');
+const overlayContext = overlay.getContext('2d');
+const cameraButton = document.querySelector('#camera-button');
+const status = document.querySelector('#status');
+const placeholder = document.querySelector('#camera-placeholder');
+
+const connectionIndices = connections => [...new Set(connections.flatMap(({ start, end }) => [start, end]))];
+const parts = [
+  { key: 'leftEye', canvas: document.querySelector('#left-eye'), indices: connectionIndices(FaceLandmarker.FACE_LANDMARKS_LEFT_EYE), padding: 1.6 },
+  { key: 'rightEye', canvas: document.querySelector('#right-eye'), indices: connectionIndices(FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE), padding: 1.6 },
+  { key: 'nose', canvas: document.querySelector('#nose'), indices: [1, 2, 4, 5, 19, 94, 97, 98, 326, 327], padding: 1.35 },
+  { key: 'mouth', canvas: document.querySelector('#mouth'), indices: connectionIndices(FaceLandmarker.FACE_LANDMARKS_LIPS), padding: 1.3 },
+].map(part => ({ ...part, context: part.canvas.getContext('2d'), card: document.querySelector(`[data-part="${part.key}"]`) }));
+
+let landmarker;
+let stream;
+let animationId;
+let lastVideoTime = -1;
+let session = 0;
+
+function setStatus(message, state = 'ready') {
+  if (status.textContent !== message) status.textContent = message;
+  status.dataset.state = state;
+}
+
+function clearFragments() {
+  overlayContext.clearRect(0, 0, overlay.width, overlay.height);
+  for (const part of parts) {
+    part.context.clearRect(0, 0, part.canvas.width, part.canvas.height);
+    part.card.classList.remove('has-face');
+  }
+}
+
+// Work in source-video pixels. A square remains inside the frame, including at its edges.
+function cropFor(landmarks, part) {
+  const points = part.indices.map(index => landmarks[index]);
+  const xs = points.map(point => point.x * video.videoWidth);
+  const ys = points.map(point => point.y * video.videoHeight);
+  const left = Math.min(...xs), right = Math.max(...xs);
+  const top = Math.min(...ys), bottom = Math.max(...ys);
+  const size = Math.min(video.videoWidth, video.videoHeight, Math.max(right - left, bottom - top, 12) * part.padding);
+  return {
+    x: Math.max(0, Math.min(video.videoWidth - size, (left + right - size) / 2)),
+    y: Math.max(0, Math.min(video.videoHeight - size, (top + bottom - size) / 2)),
+    size,
+  };
+}
+
+function drawPart(landmarks, part) {
+  const { x, y, size } = cropFor(landmarks, part);
+  const { context, canvas } = part;
+  context.setTransform(-1, 0, 0, 1, canvas.width, 0);
+  context.drawImage(video, x, y, size, size, 0, 0, canvas.width, canvas.height);
+  context.resetTransform();
+  part.card.classList.add('has-face');
+  // The source preview is mirrored. Match its positions without swapping anatomical left/right.
+  overlayContext.strokeRect(video.videoWidth - x - size, y, size, size);
+}
+
+function render() {
+  if (!stream) return;
+  try {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.currentTime !== lastVideoTime) {
+      lastVideoTime = video.currentTime;
+      const result = landmarker.detectForVideo(video, performance.now());
+      if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) {
+        overlay.width = video.videoWidth;
+        overlay.height = video.videoHeight;
+      }
+      clearFragments();
+      const landmarks = result.faceLandmarks[0];
+      if (landmarks) {
+        overlayContext.strokeStyle = '#c3db97';
+        overlayContext.lineWidth = Math.max(2, video.videoWidth / 480);
+        for (const part of parts) drawPart(landmarks, part);
+        setStatus('얼굴을 찾았습니다. 눈을 깜빡이거나 입을 움직여 보세요.', 'tracking');
+      } else {
+        setStatus('얼굴을 찾는 중입니다. 밝은 곳에서 카메라를 정면으로 바라보세요.', 'searching');
+      }
+    }
+    animationId = requestAnimationFrame(render);
+  } catch (error) {
+    console.error('얼굴 영상 처리 오류:', error);
+    stopCamera();
+    setStatus('얼굴 영상을 처리하지 못했습니다. 카메라를 다시 켜 주세요.', 'error');
+  }
+}
+
+function stopCamera() {
+  session += 1;
+  cancelAnimationFrame(animationId);
+  const previousStream = stream;
+  stream = undefined;
+  previousStream?.getTracks().forEach(track => track.stop());
+  video.srcObject = null;
+  placeholder.hidden = false;
+  clearFragments();
+  lastVideoTime = -1;
+  cameraButton.disabled = !landmarker;
+  cameraButton.textContent = '카메라 켜기';
+  setStatus('카메라가 꺼져 있습니다. 준비되면 다시 켜 주세요.');
+}
+
+async function startCamera() {
+  cameraButton.disabled = true;
+  cameraButton.textContent = '카메라 연결 중…';
+  setStatus('Chrome에서 카메라 사용을 허용해 주세요.', 'loading');
+  const currentSession = ++session;
+  let requestedStream;
+  try {
+    requestedStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } },
+    });
+    if (currentSession !== session) {
+      requestedStream.getTracks().forEach(track => track.stop());
+      return;
+    }
+    stream = requestedStream;
+    video.srcObject = stream;
+    await video.play();
+    if (currentSession !== session) return;
+    placeholder.hidden = true;
+    cameraButton.disabled = false;
+    cameraButton.textContent = '카메라 끄기';
+    stream.getVideoTracks()[0].addEventListener('ended', () => {
+      if (currentSession === session) {
+        stopCamera();
+        setStatus('카메라 연결이 끝났습니다. 다시 켜 주세요.', 'error');
+      }
+    });
+    render();
+  } catch (error) {
+    requestedStream?.getTracks().forEach(track => track.stop());
+    if (currentSession !== session) return;
+    stopCamera();
+    const messages = {
+      NotAllowedError: '카메라 사용이 허용되지 않았습니다. 주소 왼쪽의 사이트 설정에서 카메라를 허용한 뒤 다시 켜 주세요.',
+      NotFoundError: '카메라를 찾지 못했습니다. 웹캠을 연결한 뒤 다시 켜 주세요.',
+      NotReadableError: '카메라를 열지 못했습니다. 다른 앱에서 사용 중이면 종료한 뒤 다시 켜 주세요.',
+    };
+    setStatus(messages[error.name] || '카메라를 연결하지 못했습니다. 연결 상태를 확인한 뒤 다시 켜 주세요.', 'error');
+    console.error('카메라 연결 오류:', error);
+  }
+}
+
+cameraButton.addEventListener('click', () => stream ? stopCamera() : startCamera());
+document.querySelector('#fullscreen-button').addEventListener('click', async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch {
+    setStatus('전체 화면을 열지 못했습니다. Chrome에서 F11 키를 눌러 주세요.', 'error');
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  document.querySelector('#fullscreen-button').innerHTML = document.fullscreenElement
+    ? '전체 화면 나가기 <span aria-hidden="true">↙</span>'
+    : '전체 화면 <span aria-hidden="true">↗</span>';
+});
+window.addEventListener('pagehide', stopCamera);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && (stream || cameraButton.disabled && landmarker)) stopCamera();
+});
+
+async function prepare() {
+  try {
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      throw new Error('웹캠을 사용할 수 있는 HTTPS 주소에서 Chrome으로 열어 주세요.');
+    }
+    const vision = await FilesetResolver.forVisionTasks(new URL('./vendor/mediapipe/wasm', import.meta.url).href);
+    landmarker = await FaceLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: new URL('./models/face_landmarker.task', import.meta.url).href, delegate: 'CPU' },
+      runningMode: 'VIDEO',
+      numFaces: 1,
+      minFaceDetectionConfidence: 0.5,
+      minFacePresenceConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    });
+    cameraButton.disabled = false;
+    cameraButton.textContent = '카메라 켜기';
+    setStatus('준비되었습니다. 카메라 켜기를 눌러 시작하세요.');
+  } catch (error) {
+    cameraButton.disabled = true;
+    cameraButton.textContent = '준비 실패';
+    setStatus(window.isSecureContext
+      ? '얼굴 인식 파일을 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해 주세요.'
+      : '웹캠을 사용하려면 HTTPS 주소에서 Chrome으로 열어 주세요.', 'error');
+    console.error('얼굴 인식 준비 오류:', error);
+  }
+}
+
+prepare();

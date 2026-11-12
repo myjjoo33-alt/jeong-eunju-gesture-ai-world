@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111713">
+  <meta name="description" content="웹캠 속 내 얼굴을 네 개의 실시간 영상 조각으로 만나는 인터랙티브 작품">
+  <title>프로젝트A · 얼굴의 조각</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23111713'/%3E%3Cpath d='M14 14h16v16H14zm20 0h16v16H34zM14 34h16v16H14zm20 0h16v16H34z' fill='%23c3db97'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <a class="wordmark" href="./" aria-label="프로젝트A 처음으로">PROJECT <span>A</span></a>
+      <span class="edition">얼굴의 조각 <span class="divider">/</span> 첫 번째 실험</span>
+    </header>
+
+    <section class="intro" aria-labelledby="title">
+      <div>
+        <p class="eyebrow">하나의 얼굴, 네 개의 시선</p>
+        <h1 id="title">익숙한 나를,<br><em>낯선 조각으로.</em></h1>
+      </div>
+      <div class="instructions">
+        <p>카메라를 켜고 정면을 바라보세요.<br>눈을 깜빡이고, 입을 움직여 보세요.</p>
+        <div class="actions">
+          <button id="camera-button" type="button" disabled>준비 중…</button>
+          <button id="fullscreen-button" class="secondary" type="button">전체 화면 <span aria-hidden="true">↗</span></button>
+        </div>
+        <p class="privacy">영상은 이 기기 안에서만 처리됩니다. 녹화·업로드하지 않습니다.</p>
+      </div>
+    </section>
+
+    <div class="statusbar">
+      <p id="status" role="status" aria-live="polite" data-state="loading">얼굴 인식 준비 중입니다…</p>
+      <span class="step">01 <span>/</span> 네 부위 분리하기</span>
+    </div>
+
+    <section class="workspace" aria-label="실시간 얼굴 영상과 네 개의 조각">
+      <figure class="source-panel">
+        <div class="panel-heading"><span>나의 얼굴</span><span class="live-label">CAMERA</span></div>
+        <div class="source-stage">
+          <video id="webcam" autoplay muted playsinline aria-label="좌우가 거울처럼 보이는 웹캠 영상"></video>
+          <canvas id="overlay" width="640" height="480" aria-label="잘라내는 네 부위의 위치"></canvas>
+          <div id="camera-placeholder" class="camera-placeholder">
+            <svg viewBox="0 0 100 112" aria-hidden="true"><path d="M26 40c0-32 48-32 48 0v23c0 33-48 33-48 0zM13 11H2v18m85-18h11v18M13 101H2V83m85 18h11V83"/><path d="M35 46h8m14 0h8M50 52v14h5M41 77q9 7 18 0"/></svg>
+            <p>여기에 당신의 얼굴이 나타납니다</p>
+            <span>카메라 켜기를 눌러 시작하세요</span>
+          </div>
+        </div>
+        <figcaption>거울처럼 움직이는 원본 영상 <span>얼굴 한 명을 인식합니다</span></figcaption>
+      </figure>
+
+      <div class="fragments" aria-label="분리된 얼굴 조각">
+        <figure class="fragment" data-part="leftEye">
+          <figcaption><span>왼쪽 눈</span><span class="number">01</span></figcaption>
+          <div class="fragment-stage"><canvas id="left-eye" width="420" height="420" aria-label="내 왼쪽 눈의 실시간 영상"></canvas><span class="fragment-placeholder" aria-hidden="true">—</span></div>
+        </figure>
+        <figure class="fragment" data-part="rightEye">
+          <figcaption><span>오른쪽 눈</span><span class="number">02</span></figcaption>
+          <div class="fragment-stage"><canvas id="right-eye" width="420" height="420" aria-label="내 오른쪽 눈의 실시간 영상"></canvas><span class="fragment-placeholder" aria-hidden="true">—</span></div>
+        </figure>
+        <figure class="fragment" data-part="nose">
+          <figcaption><span>코</span><span class="number">03</span></figcaption>
+          <div class="fragment-stage"><canvas id="nose" width="420" height="420" aria-label="내 코의 실시간 영상"></canvas><span class="fragment-placeholder" aria-hidden="true">—</span></div>
+        </figure>
+        <figure class="fragment" data-part="mouth">
+          <figcaption><span>입</span><span class="number">04</span></figcaption>
+          <div class="fragment-stage"><canvas id="mouth" width="420" height="420" aria-label="내 입의 실시간 영상"></canvas><span class="fragment-placeholder" aria-hidden="true">—</span></div>
+        </figure>
+      </div>
+    </section>
+    <footer><span>움직임이 곧 작품이 됩니다.</span><span>PROJECT A · 얼굴의 조각</span></footer>
+    <noscript>이 작품을 보려면 Chrome 설정에서 자바스크립트를 허용해 주세요.</noscript>
+  </main>
+</body>
+</html>
