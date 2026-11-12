@@ -1,3 +1,4 @@
+import { createFaceSelector } from './face-selection.js';
 import { createMosaic } from './mosaic.js';
 import { FaceLandmarker, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
 
@@ -16,7 +17,14 @@ const parts = [
   { key: 'mouth', canvas: document.querySelector('#mouth'), indices: connectionIndices(FaceLandmarker.FACE_LANDMARKS_LIPS), padding: 1.3 },
 ].map(part => ({ ...part, context: part.canvas.getContext('2d'), card: document.querySelector(`[data-part="${part.key}"]`) }));
 
-const mosaic = createMosaic(document.querySelector('#mosaic'), parts);
+const mosaic = createMosaic(document.querySelector('#mosaic'));
+const selector = createFaceSelector();
+const otherParts = parts.map(part => {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 420;
+  return { ...part, canvas, context: canvas.getContext('2d'), card: null };
+});
+let accentPart = -1, nextAccentAt = 0;
 const controls = document.querySelector('#controls');
 const controlsToggle = document.querySelector('#controls-toggle');
 function showControls(show) {
@@ -67,7 +75,7 @@ function drawPart(landmarks, part) {
   context.setTransform(-1, 0, 0, 1, canvas.width, 0);
   context.drawImage(video, x, y, size, size, 0, 0, canvas.width, canvas.height);
   context.resetTransform();
-  part.card.classList.add('has-face');
+  part.card?.classList.add('has-face');
   // The source preview is mirrored. Match its positions without swapping anatomical left/right.
   overlayContext.strokeRect(video.videoWidth - x - size, y, size, size);
 }
@@ -83,14 +91,24 @@ function render() {
         overlay.height = video.videoHeight;
       }
       clearFragments();
-      const landmarks = result.faceLandmarks[0];
+      const now = performance.now();
+      const selection = selector.update(result.faceLandmarks, now);
+      const landmarks = selection.primary?.landmarks;
       if (landmarks) {
         overlayContext.strokeStyle = '#c3db97';
         overlayContext.lineWidth = Math.max(2, video.videoWidth / 480);
         for (const part of parts) drawPart(landmarks, part);
-        mosaic.draw();
+        if (selection.others.length) {
+          for (const part of otherParts) drawPart(selection.others[0].landmarks, part);
+        }
+        if (selection.changed || now >= nextAccentAt) {
+          const choices = [0, 1, 2, 3].filter(index => index !== accentPart);
+          accentPart = choices[Math.floor(Math.random() * choices.length)];
+          nextAccentAt = now + 4000;
+        }
+        mosaic.draw(parts.map(part => part.canvas), selection.others.length ? otherParts.map(part => part.canvas) : [], accentPart);
         if (hideOnFirstFace) { showControls(false); hideOnFirstFace = false; }
-        setStatus('얼굴을 찾았습니다. 눈을 깜빡이거나 입을 움직여 보세요.', 'tracking');
+        setStatus(result.faceLandmarks.length === 1 ? '1명 인식 중 · 본인의 조각으로 전체 화면을 채웁니다.' : '2명 인식 중 · 큰 얼굴은 빨간 박스, 다른 얼굴은 주변 박스에 표시합니다.', 'tracking');
       } else {
         setStatus('얼굴을 찾는 중입니다. 밝은 곳에서 카메라를 정면으로 바라보세요.', 'searching');
       }
@@ -104,6 +122,8 @@ function render() {
 }
 
 function stopCamera() {
+  selector.reset();
+  nextAccentAt = 0;
   showControls(true);
   session += 1;
   cancelAnimationFrame(animationId);
@@ -191,7 +211,7 @@ async function prepare() {
     landmarker = await FaceLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: new URL('./models/face_landmarker.task', import.meta.url).href, delegate: 'CPU' },
       runningMode: 'VIDEO',
-      numFaces: 1,
+      numFaces: 2,
       minFaceDetectionConfidence: 0.5,
       minFacePresenceConfidence: 0.5,
       minTrackingConfidence: 0.5,

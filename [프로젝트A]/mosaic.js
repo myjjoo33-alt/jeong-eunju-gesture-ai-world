@@ -1,7 +1,7 @@
 // Four processed source tiles are reused across the complete screen each frame.
-export function createMosaic(canvas, parts) {
+export function createMosaic(canvas) {
   const context = canvas.getContext('2d', { alpha: false });
-  const tiles = parts.map(() => {
+  const tiles = Array.from({ length: 8 }, () => {
     const tile = document.createElement('canvas');
     tile.width = tile.height = 420;
     return { canvas: tile, context: tile.getContext('2d', { alpha: false }) };
@@ -32,14 +32,16 @@ export function createMosaic(canvas, parts) {
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
   }
   function clear() { resize(); context.fillStyle = '#070707'; context.fillRect(0, 0, canvas.width, canvas.height); }
-  function draw() {
+  function draw(primaryParts, surroundingParts, accentPart) {
+    const sources = [...primaryParts, ...surroundingParts];
+    const backgroundOffset = surroundingParts.length ? primaryParts.length : 0;
     resize();
-    for (let i = 0; i < parts.length; i++) {
+    for (let i = 0; i < sources.length; i++) {
       tiles[i].context.filter = 'grayscale(1) contrast(1.7)';
-      tiles[i].context.drawImage(parts[i].canvas, 0, 0);
+      tiles[i].context.drawImage(sources[i], 0, 0);
     }
     redContext.globalCompositeOperation = 'source-over';
-    redContext.drawImage(tiles[0].canvas, 0, 0);
+    redContext.drawImage(tiles[accentPart].canvas, 0, 0);
     redContext.globalCompositeOperation = 'multiply';
     redContext.fillStyle = '#ff1018';
     redContext.fillRect(0, 0, 420, 420);
@@ -47,7 +49,7 @@ export function createMosaic(canvas, parts) {
       const x = Math.round(cell.x * canvas.width / columns), y = Math.round(cell.y * canvas.height / rows);
       const width = Math.round((cell.x + cell.size) * canvas.width / columns) - x;
       const height = Math.round((cell.y + cell.size) * canvas.height / rows) - y;
-      const source = cell.accent ? red : tiles[cell.part].canvas;
+      const source = cell.accent ? red : tiles[backgroundOffset + cell.part].canvas;
       // Cover each rectangle without stretching the face or leaving gaps.
       const sw = width > height ? 420 : 420 * width / height;
       const sh = height > width ? 420 : 420 * height / width;
