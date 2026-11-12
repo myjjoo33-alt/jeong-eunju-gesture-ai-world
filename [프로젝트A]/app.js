@@ -1,3 +1,4 @@
+import { createMosaic } from './mosaic.js';
 import { FaceLandmarker, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
 
 const video = document.querySelector('#webcam');
@@ -15,6 +16,16 @@ const parts = [
   { key: 'mouth', canvas: document.querySelector('#mouth'), indices: connectionIndices(FaceLandmarker.FACE_LANDMARKS_LIPS), padding: 1.3 },
 ].map(part => ({ ...part, context: part.canvas.getContext('2d'), card: document.querySelector(`[data-part="${part.key}"]`) }));
 
+const mosaic = createMosaic(document.querySelector('#mosaic'), parts);
+const controls = document.querySelector('#controls');
+const controlsToggle = document.querySelector('#controls-toggle');
+function showControls(show) {
+  controls.hidden = !show;
+  controlsToggle.textContent = show ? '안내 숨기기' : '카메라 · 설정';
+  controlsToggle.setAttribute('aria-expanded', String(show));
+}
+controlsToggle.addEventListener('click', () => showControls(controls.hidden));
+let hideOnFirstFace = false;
 let landmarker;
 let stream;
 let animationId;
@@ -27,6 +38,7 @@ function setStatus(message, state = 'ready') {
 }
 
 function clearFragments() {
+  mosaic.clear();
   overlayContext.clearRect(0, 0, overlay.width, overlay.height);
   for (const part of parts) {
     part.context.clearRect(0, 0, part.canvas.width, part.canvas.height);
@@ -76,6 +88,8 @@ function render() {
         overlayContext.strokeStyle = '#c3db97';
         overlayContext.lineWidth = Math.max(2, video.videoWidth / 480);
         for (const part of parts) drawPart(landmarks, part);
+        mosaic.draw();
+        if (hideOnFirstFace) { showControls(false); hideOnFirstFace = false; }
         setStatus('얼굴을 찾았습니다. 눈을 깜빡이거나 입을 움직여 보세요.', 'tracking');
       } else {
         setStatus('얼굴을 찾는 중입니다. 밝은 곳에서 카메라를 정면으로 바라보세요.', 'searching');
@@ -90,6 +104,7 @@ function render() {
 }
 
 function stopCamera() {
+  showControls(true);
   session += 1;
   cancelAnimationFrame(animationId);
   const previousStream = stream;
@@ -126,6 +141,7 @@ async function startCamera() {
     placeholder.hidden = true;
     cameraButton.disabled = false;
     cameraButton.textContent = '카메라 끄기';
+    hideOnFirstFace = true;
     stream.getVideoTracks()[0].addEventListener('ended', () => {
       if (currentSession === session) {
         stopCamera();

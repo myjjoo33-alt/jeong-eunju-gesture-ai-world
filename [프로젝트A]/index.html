@@ -11,19 +11,19 @@
   <script defer src="./bootstrap.js"></script>
 </head>
 <body>
-  <main class="page">
+  <canvas id="mosaic" aria-label="눈·코·입의 실시간 흑백 모자이크"></canvas><button id="controls-toggle" type="button" aria-expanded="true" aria-controls="controls">안내 숨기기</button><main id="controls" class="page">
     <header class="topbar">
       <a class="wordmark" href="./" aria-label="프로젝트A 처음으로">PROJECT <span>A</span></a>
-      <span class="edition">얼굴의 조각 <span class="divider">/</span> 첫 번째 실험</span>
+      <span class="edition">얼굴의 조각 <span class="divider">/</span> 얼굴 모자이크</span>
     </header>
 
     <section class="intro" aria-labelledby="title">
       <div>
-        <p class="eyebrow">하나의 얼굴, 네 개의 시선</p>
-        <h1 id="title">익숙한 나를,<br><em>낯선 조각으로.</em></h1>
+        <p class="eyebrow">실시간 얼굴 모자이크</p>
+        <h1 id="title">흩어진 나,<br><em>화면을 채우다.</em></h1>
       </div>
       <div class="instructions">
-        <p>카메라를 켜고 정면을 바라보세요.<br>눈을 깜빡이고, 입을 움직여 보세요.</p>
+        <p>카메라를 켜면 얼굴 조각이 화면을 채웁니다.<br>눈을 깜빡이고, 입을 움직여 보세요.</p>
         <div class="actions">
           <button id="camera-button" type="button" disabled>준비 중…</button>
           <button id="fullscreen-button" class="secondary" type="button">전체 화면 <span aria-hidden="true">↗</span></button>
@@ -34,7 +34,7 @@
 
     <div class="statusbar">
       <p id="status" role="status" aria-live="polite" data-state="loading">얼굴 인식 준비 중입니다…</p>
-      <a id="open-project-link" hidden href="https://myjjoo33-alt.github.io/jeong-eunju-gesture-ai-world/%5B%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8A%5D/" style="color: #c3db97; font-size: 13px;">배포된 화면 열기 ↗</a><span class="step">01 <span>/</span> 네 부위 분리하기</span>
+      <a id="open-project-link" hidden href="https://myjjoo33-alt.github.io/jeong-eunju-gesture-ai-world/%5B%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8A%5D/" style="color: #c3db97; font-size: 13px;">배포된 화면 열기 ↗</a><span class="step">01 <span>/</span> 흑백 조각과 붉은 강조</span>
     </div>
 
     <section class="workspace" aria-label="실시간 얼굴 영상과 네 개의 조각">
