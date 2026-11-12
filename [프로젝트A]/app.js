@@ -1,7 +1,8 @@
-import { createHeadTurn, createRedBoxes } from './head-interaction.js';
+import { createHandReach } from './hand-interaction.js';
+import { createRedBox } from './red-box.js';
 import { createFaceSelector } from './face-selection.js';
 import { createMosaic } from './mosaic.js';
-import { FaceLandmarker, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
+import { FaceLandmarker, HandLandmarker, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
 
 const video = document.querySelector('#webcam');
 const overlay = document.querySelector('#overlay');
@@ -25,8 +26,8 @@ const otherParts = parts.map(part => {
   canvas.width = canvas.height = 420;
   return { ...part, canvas, context: canvas.getContext('2d'), card: null };
 });
-const headTurn = createHeadTurn();
-const redBoxes = createRedBoxes();
+const handReach = createHandReach();
+const redBoxes = createRedBox();
 const controls = document.querySelector('#controls');
 const controlsToggle = document.querySelector('#controls-toggle');
 function showControls(show) {
@@ -36,7 +37,11 @@ function showControls(show) {
 }
 controlsToggle.addEventListener('click', () => showControls(controls.hidden));
 let hideOnFirstFace = false;
-let landmarker;
+let landmarker, handLandmarker;
+let density = 0, lastHandTime = -Infinity;
+const handStatus = document.querySelector('#hand-status');
+function resetDensity(waitForRelease = false) { density = 0; mosaic.setDensity(0); handReach.reset(waitForRelease); handStatus.textContent = '손을 화면에 보여 주세요 · 증식 0/6'; }
+document.querySelector('#reset-fragments').addEventListener('click', () => resetDensity(true));
 let stream;
 let animationId;
 let lastVideoTime = -1;
@@ -104,19 +109,28 @@ function render() {
           for (const part of otherParts) drawPart(selection.others[0].landmarks, part);
         }
         if (selection.changed) {
-          headTurn.reset();
+          handReach.reset();
           redBoxes.reset(now);
         }
-        if (headTurn.update(landmarks, now)) redBoxes.add(now);
+        if (now - lastHandTime >= 100) {
+          lastHandTime = now;
+          const hands = handLandmarker.detectForVideo(video, now);
+          const gesture = handReach.update(hands.landmarks, now);
+          if (gesture.trigger && density < 6) { density++; mosaic.setDensity(density); }
+          handStatus.textContent = (density === 6 ? '최대 증식 · 설정에서 조각 초기화 가능' : gesture.message) + ' · 증식 ' + density + '/6';
+          handStatus.dataset.hands = String(hands.landmarks.length);
+          handStatus.dataset.level = String(density);
+        }
         const accents = redBoxes.get(now);
         mosaic.draw(parts.map(part => part.canvas), selection.others.length ? otherParts.map(part => part.canvas) : [], accents);
         status.dataset.redBoxes = String(accents.length);
         if (hideOnFirstFace) { showControls(false); hideOnFirstFace = false; }
-        setStatus(result.faceLandmarks.length + '명 인식 중 · 빨간 박스 ' + accents.length + '개 · 정면을 본 뒤 고개를 좌우로 돌려 보세요.', 'tracking');
+        setStatus(result.faceLandmarks.length + '명 인식 중 · 손바닥을 펴고 앞으로 내밀면 주변 조각이 늘어납니다.', 'tracking');
       } else {
-        headTurn.reset();
+        handReach.reset();
         redBoxes.reset(now);
         status.dataset.redBoxes = '1';
+        handStatus.textContent = '얼굴이 보이도록 카메라를 바라봐 주세요';
         setStatus('얼굴을 찾는 중입니다. 밝은 곳에서 카메라를 정면으로 바라보세요.', 'searching');
       }
     }
@@ -130,7 +144,9 @@ function render() {
 
 function stopCamera() {
   selector.reset();
-  headTurn.reset();
+  resetDensity();
+  lastHandTime = -Infinity;
+  handReach.reset();
   redBoxes.reset();
   status.dataset.redBoxes = '1';
   showControls(true);
@@ -225,6 +241,12 @@ async function prepare() {
       minFacePresenceConfidence: 0.5,
       minTrackingConfidence: 0.5,
     });
+    handLandmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: new URL('./models/hand_landmarker.task', import.meta.url).href, delegate: 'CPU' },
+      runningMode: 'VIDEO', numHands: 2,
+      minHandDetectionConfidence: 0.4, minHandPresenceConfidence: 0.4, minTrackingConfidence: 0.4,
+    });
+    handStatus.textContent = '손 인식 준비 완료 · 카메라를 켜 주세요';
     cameraButton.disabled = false;
     cameraButton.textContent = '카메라 켜기';
     setStatus('준비되었습니다. 카메라 켜기를 눌러 시작하세요.');

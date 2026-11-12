@@ -76,3 +76,5 @@ h1 { font-size: 34px; }
 .statusbar { display: block; padding-bottom: 0; }
 #open-project-link { margin-top: 12px; }
 @media (max-width: 760px) { .page { padding: 20px; } h1 { font-size: 30px; } .intro { padding: 20px 0 12px; } }
+#hand-status { position: fixed; left: 14px; bottom: 14px; z-index: 3; max-width: calc(100vw - 28px); margin: 0; padding: 9px 12px; border-radius: 4px; background: #000c; color: #fff; font-size: 13px; line-height: 1.5; pointer-events: none; }
+.actions { flex-wrap: wrap; }

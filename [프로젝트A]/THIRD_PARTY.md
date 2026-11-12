@@ -14,3 +14,9 @@
 - 출처: https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
 - 공식 안내: https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker
 - 저장 위치: `models/face_landmarker.task`
+
+## Hand Landmarker 모델
+- 모델: hand_landmarker / float16 / 1
+- 출처: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+- 공식 안내: https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker
+- 저장 위치: `models/hand_landmarker.task`

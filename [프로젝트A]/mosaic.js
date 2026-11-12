@@ -9,23 +9,22 @@ export function createMosaic(canvas) {
   const red = document.createElement('canvas');
   red.width = red.height = 420;
   const redContext = red.getContext('2d', { alpha: false });
-  const columns = 24, rows = 12;
-  const cells = [];
-  const occupied = Array.from({ length: rows }, () => Array(columns).fill(false));
-  function add(x, y, size, part, accent = false) {
-    cells.push({ x, y, size, part, accent });
-    for (let row = y; row < y + size; row++) for (let col = x; col < x + size; col++) occupied[row][col] = true;
-  }
-
-  const sequence = [0, 1, 0, 1, 2, 3];
-  let index = 0;
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < columns; x++) {
-      if (occupied[y][x]) continue;
-      const fits = x + 1 < columns && y + 1 < rows && !occupied[y][x + 1] && !occupied[y + 1][x] && !occupied[y + 1][x + 1];
-      add(x, y, fits && (x < 8 || x >= 16) ? 2 : 1, sequence[index++ % sequence.length]);
+  let columns = 24, rows = 12, cells = [];
+  function setDensity(level) {
+    columns = 24 + level * 8; rows = 12 + level * 4;
+    cells = [];
+    const used = Array.from({length:rows},()=>Array(columns).fill(false));
+    const sequence=[0,1,0,1,2,3];
+    let index=0;
+    for(let y=0;y<rows;y++) for(let x=0;x<columns;x++) {
+      if(used[y][x]) continue;
+      const fits=x+1<columns && y+1<rows && !used[y][x+1] && !used[y+1][x] && !used[y+1][x+1];
+      const size=fits && (x<columns/3 || x>=columns*2/3) ? 2 : 1;
+      cells.push({x,y,size,part:sequence[index++%sequence.length]});
+      for(let row=y;row<y+size;row++) for(let col=x;col<x+size;col++) used[row][col]=true;
     }
   }
+  setDensity(0);
   function resize() {
     const scale = Math.min(devicePixelRatio || 1, 1920 / innerWidth);
     const width = Math.round(innerWidth * scale), height = Math.round(innerHeight * scale);
@@ -60,13 +59,13 @@ export function createMosaic(canvas) {
       redContext.globalCompositeOperation = 'multiply';
       redContext.fillStyle = '#ff1018';
       redContext.fillRect(0, 0, 420, 420);
-      const x = box.x * canvas.width / columns, y = box.y * canvas.height / rows;
-      const width = box.size * canvas.width / columns, height = box.size * canvas.height / rows;
+      const x = box.x * canvas.width / 24, y = box.y * canvas.height / 12;
+      const width = box.size * canvas.width / 24, height = box.size * canvas.height / 12;
       const sw = width > height ? 420 : 420 * width / height;
       const sh = height > width ? 420 : 420 * height / width;
       context.drawImage(red, (420 - sw) / 2, (420 - sh) / 2, sw, sh, x, y, width, height);
     }
   }
   clear();
-  return { draw, clear };
+  return { draw, clear, setDensity };
 }
