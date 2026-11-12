@@ -67,5 +67,5 @@ export function createMosaic(canvas) {
     }
   }
   clear();
-  return { draw, clear, setDensity };
+  return { draw, clear, setDensity, getTileCount: () => cells.length };
 }

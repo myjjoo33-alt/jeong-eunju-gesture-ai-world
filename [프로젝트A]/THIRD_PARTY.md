@@ -20,3 +20,8 @@
 - 출처: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
 - 공식 안내: https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker
 - 저장 위치: `models/hand_landmarker.task`
+## Gesture Recognizer 모델 (현재 손바닥·주먹 판별에 사용)
+- 모델: gesture_recognizer / float16 / 1
+- 출처: https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task
+- 공식 안내: https://developers.google.com/edge/mediapipe/solutions/vision/gesture_recognizer
+- 저장 위치: `models/gesture_recognizer.task`

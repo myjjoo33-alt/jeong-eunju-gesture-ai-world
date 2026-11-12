@@ -2,7 +2,7 @@ import { createHandReach } from './hand-interaction.js';
 import { createRedBox } from './red-box.js';
 import { createFaceSelector } from './face-selection.js';
 import { createMosaic } from './mosaic.js';
-import { FaceLandmarker, HandLandmarker, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
+import { FaceLandmarker, GestureRecognizer, FilesetResolver } from './vendor/mediapipe/vision_bundle.mjs';
 
 const video = document.querySelector('#webcam');
 const overlay = document.querySelector('#overlay');
@@ -37,10 +37,10 @@ function showControls(show) {
 }
 controlsToggle.addEventListener('click', () => showControls(controls.hidden));
 let hideOnFirstFace = false;
-let landmarker, handLandmarker;
+let landmarker, gestureRecognizer;
 let density = 0, lastHandTime = -Infinity;
 const handStatus = document.querySelector('#hand-status');
-function resetDensity(waitForRelease = false) { density = 0; mosaic.setDensity(0); handReach.reset(waitForRelease); handStatus.textContent = '손을 화면에 보여 주세요 · 증식 0/6'; }
+function resetDensity(waitForRelease = false) { redBoxes.reset(performance.now()); density = 0; mosaic.setDensity(0); handReach.reset(waitForRelease); handStatus.textContent = '손을 화면에 보여 주세요'; }
 document.querySelector('#reset-fragments').addEventListener('click', () => resetDensity(true));
 let stream;
 let animationId;
@@ -114,10 +114,14 @@ function render() {
         }
         if (now - lastHandTime >= 100) {
           lastHandTime = now;
-          const hands = handLandmarker.detectForVideo(video, now);
-          const gesture = handReach.update(hands.landmarks, now);
-          if (gesture.trigger && density < 6) { density++; mosaic.setDensity(density); }
-          handStatus.textContent = (density === 6 ? '최대 증식 · 설정에서 조각 초기화 가능' : gesture.message) + ' · 증식 ' + density + '/6';
+          const hands = gestureRecognizer.recognizeForVideo(video, now);
+          const gesture = handReach.update(hands.landmarks, now, hands.gestures.map(list => list[0]?.score >= 0.55 ? list[0].categoryName : 'None'));
+          if (gesture.action === 'grow') {
+            density = Math.min(6,density+1); redBoxes.add(now); mosaic.setDensity(density);
+          } else if (gesture.action === 'shrink') {
+            density = Math.max(-2,density-1); redBoxes.remove(now); mosaic.setDensity(density);
+          }
+          handStatus.textContent = gesture.message + ' · 일반 ' + mosaic.getTileCount() + '개 · 빨간 ' + redBoxes.get(now).length + '개';
           handStatus.dataset.hands = String(hands.landmarks.length);
           handStatus.dataset.level = String(density);
         }
@@ -125,7 +129,7 @@ function render() {
         mosaic.draw(parts.map(part => part.canvas), selection.others.length ? otherParts.map(part => part.canvas) : [], accents);
         status.dataset.redBoxes = String(accents.length);
         if (hideOnFirstFace) { showControls(false); hideOnFirstFace = false; }
-        setStatus(result.faceLandmarks.length + '명 인식 중 · 손바닥을 펴고 앞으로 내밀면 주변 조각이 늘어납니다.', 'tracking');
+        setStatus(result.faceLandmarks.length + '명 인식 중 · 손 내밀기: 증식 · 주먹: 감소', 'tracking');
       } else {
         handReach.reset();
         redBoxes.reset(now);
@@ -241,8 +245,8 @@ async function prepare() {
       minFacePresenceConfidence: 0.5,
       minTrackingConfidence: 0.5,
     });
-    handLandmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: new URL('./models/hand_landmarker.task', import.meta.url).href, delegate: 'CPU' },
+    gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: new URL('./models/gesture_recognizer.task', import.meta.url).href, delegate: 'CPU' },
       runningMode: 'VIDEO', numHands: 2,
       minHandDetectionConfidence: 0.4, minHandPresenceConfidence: 0.4, minTrackingConfidence: 0.4,
     });

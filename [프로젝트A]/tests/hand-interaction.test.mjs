@@ -29,9 +29,8 @@ test('remove hand and return allows another reach',()=>{
   h.update([hand()],800);
   assert.equal(h.update([hand()],1000).trigger,true);
 });
-test('closed, tiny, or momentary hands do not trigger',()=>{
-  const h=createHandReach(); h.update([hand(.2,false)],0);
-  assert.equal(h.update([hand(.2,false)],1000).trigger,false);
+test('tiny or momentary open hands do not trigger',()=>{
+  const h=createHandReach();
   h.update([hand(.03)],1100);
   assert.equal(h.update([hand(.03)],1400).trigger,false);
   h.update([hand()],1500); h.update([],1550);
@@ -50,4 +49,35 @@ test('manual reset waits for hand removal instead of instantly multiplying again
   assert.equal(h.update([hand()],1000).trigger,false);
   h.update([],1100);h.update([],1600);h.update([hand()],1700);
   assert.equal(h.update([hand()],1900).trigger,true);
+});
+test('fist shrinks once, holding does not repeat, opening rearms it',()=>{
+  const h=createHandReach();
+  h.update([hand(.2,false)],0,['Closed_Fist']);
+  assert.equal(h.update([hand(.2,false)],300,['Closed_Fist']).action,'shrink');
+  assert.equal(h.update([hand(.2,false)],1000,['Closed_Fist']).trigger,false);
+  h.update([hand()],1100,['Open_Palm']);h.update([hand()],1400,['Open_Palm']);
+  h.update([hand(.2,false)],1500,['Closed_Fist']);
+  assert.equal(h.update([hand(.2,false)],1800,['Closed_Fist']).action,'shrink');
+});
+test('unknown classified hand is not mistaken for a fist',()=>{
+  const h=createHandReach();h.update([hand(.2,false)],0,['None']);
+  assert.equal(h.update([hand(.2,false)],1000,['None']).trigger,false);
+});
+test('red clones shrink, stay in bounds, and first four have unique parts',()=>{
+  const r=createRedBox();let previous=8;
+  for(let count=2;count<=30;count++){
+    r.add(count*100);const boxes=r.get(count*100);
+    assert.equal(boxes.length,count);assert.ok(boxes[0].size<previous);previous=boxes[0].size;
+    assert.equal(new Set(boxes.slice(0,4).map(b=>b.part)).size,Math.min(4,count));
+    for(const b of boxes){assert.ok(b.x>=0&&b.x+b.size<=24+1e-9);assert.ok(b.y>=0&&b.y+b.size<=12+1e-9);}
+  }
+});
+test('removal chooses a random box and can reach zero without invalid geometry',()=>{
+  const r=createRedBox(()=>.9);r.add(0);r.add(0);
+  const before=r.get(0);
+  assert.equal(r.remove(10),before[2].id);
+  assert.deepEqual(r.get(10).map(b=>b.id),before.slice(0,2).map(b=>b.id));
+  r.remove(20);r.remove(30);
+  assert.deepEqual(r.get(30),[]);assert.equal(r.remove(40),null);
+  r.add(50);assert.equal(r.get(50).length,1);assert.equal(r.get(50)[0].size,8);
 });
